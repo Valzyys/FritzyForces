@@ -105,3 +105,14 @@ describe("utilitas", () => {
   it("mediaUrl meng-encode setiap segmen", () => expect(mediaUrl("u/a b/c.png")).toBe("/media/u/a%20b/c.png"));
   it("parsePairs", () => expect(parsePairs("Generasi | 12\nrusak\n")).toEqual([{ label: "Generasi", value: "12" }]));
 });
+
+describe("skema D1", () => {
+  it("schema.generated.ts sinkron dengan folder migrations", async () => {
+    const { MIGRATIONS } = await import("@/lib/schema.generated");
+    const fs = await import("node:fs");
+    const files = fs.readdirSync("migrations").filter((f) => f.endsWith(".sql")).sort();
+    expect(MIGRATIONS.map((m) => m.name)).toEqual(files);
+    expect(MIGRATIONS[0].statements.some((s) => s.startsWith("CREATE TABLE admins"))).toBe(true);
+    expect(MIGRATIONS[0].statements.every((s) => !s.includes("--"))).toBe(true);
+  });
+});

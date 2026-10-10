@@ -11,11 +11,12 @@
     {
       "binding": "DB",
       "database_name": "fritzyforce-db",
-      // Ganti dengan ID dari `wrangler d1 create fritzyforce-db`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Tanpa database_id: `wrangler deploy` membuat database ini otomatis (auto-provisioning).
+      // Setelah dibuat, boleh isi ID-nya di sini (lihat `wrangler d1 list`).
       "migrations_dir": "migrations"
     }
   ],
+  // Bucket dibuat otomatis saat deploy bila belum ada.
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fritzyforce-media" }],
   "triggers": {
     // Sinkronisasi jadwal teater (JKT48Connect) + rekap kegiatan (Google Sheets) tiap 3 jam.

@@ -55,7 +55,7 @@ Admin (`/admin`, tidak diindeks): ringkasan, jadwal, rekap kegiatan, timeline, d
 ```bash
 npm install
 cp .dev.vars.example .dev.vars      # isi nilai lokal
-npm run db:migrate:local            # buat tabel D1 lokal
+npm run db:migrate:local            # opsional: tabel juga dibuat otomatis saat request pertama
 npm run dev                         # Next dev server (binding D1/R2 lokal via wrangler)
 npm run preview                     # build OpenNext + jalankan di runtime Workers lokal
 ```
@@ -64,22 +64,42 @@ Cek kualitas: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 
 ## Deploy ke Cloudflare Workers
 
-1. Login: `npx wrangler login`.
-2. Buat database dan bucket:
-   ```bash
-   npx wrangler d1 create fritzyforce-db       # salin database_id ke wrangler.jsonc
-   npx wrangler r2 bucket create fritzyforce-media
-   ```
-3. Jalankan migrasi remote: `npm run db:migrate:remote`.
-4. Set secret:
-   ```bash
-   npx wrangler secret put ADMIN_SETUP_TOKEN   # string acak ≥ 16 karakter
-   npx wrangler secret put CRON_SECRET         # string acak panjang
-   npx wrangler secret put JKT48_API_KEY       # API key JKT48Connect (opsional, untuk sinkron teater & live)
-   ```
-5. Sesuaikan `vars` di `wrangler.jsonc` bila perlu: `SITE_URL`, `FRITZY_MEMBER_KEY` (kata kunci nama/url_key Fritzy di lineup API), `RECAP_SHEET_ID`.
-6. Deploy: `npm run deploy`, lalu hubungkan domain `fritzyforce.my.id` di dashboard Cloudflare (Workers → Settings → Domains & Routes).
-7. Buka `/admin/setup`, masukkan `ADMIN_SETUP_TOKEN`, buat akun admin pertama. Setelah itu token boleh dihapus (`wrangler secret delete ADMIN_SETUP_TOKEN`).
+### Lewat Workers Builds (repo GitHub terhubung)
+
+Pengaturan build di dashboard Cloudflare (Workers → proyek → Settings → Build):
+
+| Kolom | Nilai |
+| --- | --- |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Root directory | `/` |
+
+- `npm run build` membangkitkan skema D1 lalu menjalankan `opennextjs-cloudflare build` (menghasilkan `.open-next/`).
+- D1 `fritzyforce-db` dan R2 `fritzyforce-media` **dibuat otomatis** saat deploy pertama (auto-provisioning Wrangler), karena `database_id` sengaja dikosongkan.
+- Tabel database **dibuat otomatis** oleh Worker saat request pertama (`src/lib/schema.ts`), tercatat di tabel `d1_migrations` sehingga tetap kompatibel dengan `wrangler d1 migrations apply`.
+- Nama Worker di dashboard harus sama dengan `"name"` di `wrangler.jsonc` (`fritzyforce`).
+
+Lalu tambahkan secret di Settings → Variables and Secrets (tipe *Secret*):
+
+| Nama | Isi |
+| --- | --- |
+| `ADMIN_SETUP_TOKEN` | string acak ≥ 16 karakter, untuk membuat admin pertama di `/admin/setup` |
+| `CRON_SECRET` | string acak panjang, untuk endpoint sinkronisasi cron |
+| `JKT48_API_KEY` | (opsional) API key JKT48Connect untuk sinkron jadwal teater & status live |
+
+Setelah deploy: buka `/admin/setup`, buat admin, lalu unggah foto Fritzy di Admin → Profil.
+
+### Lewat CLI
+
+```bash
+npx wrangler login
+npm run deploy                              # build + deploy (D1 & R2 dibuat otomatis)
+npx wrangler secret put ADMIN_SETUP_TOKEN
+npx wrangler secret put CRON_SECRET
+npx wrangler secret put JKT48_API_KEY       # opsional
+```
+
+Domain `fritzyforce.my.id` dihubungkan di Workers → Settings → Domains & Routes. Variabel `SITE_URL`, `FRITZY_MEMBER_KEY`, dan `RECAP_SHEET_ID` ada di `vars` pada `wrangler.jsonc`.
 
 ### Sinkronisasi otomatis
 

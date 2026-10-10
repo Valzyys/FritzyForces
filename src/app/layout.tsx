@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   applicationName: "Fritzy Force",
   openGraph: { type: "website", locale: "id_ID", siteName: "Fritzy Force" },
   twitter: { card: "summary_large_image" },
-  icons: { icon: "/icon.svg" },
 };
 
 export const viewport: Viewport = {

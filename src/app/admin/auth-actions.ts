@@ -61,10 +61,11 @@ export async function setupFirstAdmin(_prev: ActionState, form: FormData): Promi
   const ipBucket = await bucketKey("setup", await clientIp());
   if (await isLimited(ipBucket, 10, 60)) return failure("Terlalu banyak percobaan. Coba lagi nanti.");
 
-  if (!env.ADMIN_SETUP_TOKEN || env.ADMIN_SETUP_TOKEN.length < 16) {
-    return failure("ADMIN_SETUP_TOKEN belum dikonfigurasi (minimal 16 karakter).");
+  const setupToken = (env.ADMIN_SETUP_TOKEN ?? "").trim();
+  if (!setupToken) {
+    return failure("ADMIN_SETUP_TOKEN belum dikonfigurasi di Cloudflare (Settings → Variables and Secrets).");
   }
-  if (!safeEqualString(parsed.data.token, env.ADMIN_SETUP_TOKEN)) {
+  if (!safeEqualString(parsed.data.token.trim(), setupToken)) {
     await hit(ipBucket);
     return failure("Token setup salah.", { token: "Token tidak cocok." });
   }

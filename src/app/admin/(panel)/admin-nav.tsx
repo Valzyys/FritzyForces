@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { cx } from "@/components/ui";
+import { LogoMark } from "@/components/logo";
 
 const NAV = [
   { href: "/admin", label: "Ringkasan", icon: LayoutDashboard },
@@ -81,7 +82,7 @@ export function AdminNav({ footer, pendingFanwall }: { footer: React.ReactNode; 
     <>
       {/* Bilah atas seluler */}
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between bg-plum-950 px-4 text-white lg:hidden">
-        <span className="font-display font-bold">FF Admin</span>
+        <span className="flex items-center gap-2 font-display font-bold"><LogoMark className="size-8" /> Admin</span>
         <button
           type="button"
           onClick={() => {
@@ -105,7 +106,7 @@ export function AdminNav({ footer, pendingFanwall }: { footer: React.ReactNode; 
         )}
       >
         <Link href="/admin" className="mb-6 hidden items-center gap-2 px-3 pt-2 lg:flex">
-          <span className="grid size-8 place-items-center rounded-lg bg-plum-600 font-display text-sm font-bold">FF</span>
+          <LogoMark className="size-9" />
           <span className="font-display font-bold">Admin</span>
         </Link>
         <nav aria-label="Navigasi admin" className="flex-1 overflow-y-auto">

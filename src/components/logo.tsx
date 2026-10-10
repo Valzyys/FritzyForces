@@ -1,21 +1,15 @@
-/**
- * Wordmark sementara FritzyForce. Bila admin mengunggah logo resmi (Pengaturan → Logo),
- * file itu bisa menggantikan komponen ini.
- */
-export function LogoMark({ className }: { className?: string }) {
+/** Logo resmi Fritzy Force (lambang emas di latar ungu). */
+export function LogoMark({ className = "size-9", alt = "" }: { className?: string; alt?: string }) {
   return (
-    <svg viewBox="0 0 40 40" className={className} aria-hidden>
-      <rect width="40" height="40" rx="12" fill="var(--color-plum-600)" />
-      <path d="M12 11h13v4.2h-8.4v3.3h7.4v4.1h-7.4V29H12z" fill="#fff" />
-      <circle cx="28.5" cy="27" r="2.6" fill="var(--color-plum-200)" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/logo.webp" alt={alt} width={256} height={256} decoding="async" className={`shrink-0 rounded-xl object-cover ring-1 ring-plum-900/10 ${className}`} />
   );
 }
 
 export function Wordmark({ name }: { name: string }) {
   return (
     <span className="inline-flex items-center gap-2.5">
-      <LogoMark className="size-9" />
+      <LogoMark className="size-10" />
       <span className="font-display text-lg font-bold leading-none tracking-tight text-ink">{name}</span>
     </span>
   );

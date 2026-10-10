@@ -64,8 +64,9 @@ export function PostCard({ post, featured = false }: { post: Post; featured?: bo
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cover} alt="" loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
         ) : (
-          <div className="grid size-full place-items-center bg-[radial-gradient(circle_at_30%_20%,var(--color-plum-100),transparent_60%)]">
-            <span className="font-display text-5xl font-bold text-plum-200">FF</span>
+          <div className="bg-stripes grid size-full place-items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="" className="size-20 rounded-2xl opacity-90" />
           </div>
         )}
       </div>

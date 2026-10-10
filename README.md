@@ -83,7 +83,7 @@ Lalu tambahkan secret di Settings → Variables and Secrets (tipe *Secret*):
 
 | Nama | Isi |
 | --- | --- |
-| `ADMIN_SETUP_TOKEN` | string acak ≥ 16 karakter, untuk membuat admin pertama di `/admin/setup` |
+| `ADMIN_SETUP_TOKEN` | token bebas (panjang/isi apa saja) untuk membuat admin pertama di `/admin/setup`; boleh dihapus setelah admin dibuat |
 | `CRON_SECRET` | string acak panjang, untuk endpoint sinkronisasi cron |
 | `JKT48_API_KEY` | (opsional) API key JKT48Connect untuk sinkron jadwal teater & status live |
 

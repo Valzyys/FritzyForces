@@ -5,7 +5,7 @@ import { PageTransition } from "@/components/page-transition";
 import { EMPTY_CHROME, getSiteChrome } from "@/lib/data";
 import { safeQuery } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
-import { formatDate, formatTime } from "@/lib/time";
+import { formatDate, formatShortDate, formatTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     <>
       {/* Menandai intro sudah tampil (atau reduced-motion) sebelum render, agar tidak berkedip. */}
       <script dangerouslySetInnerHTML={{ __html: INTRO_BOOT_SCRIPT }} />
-      <Intro name={settings.siteName} setlists={chrome.data.setlists} />
+      <Intro name={settings.siteName} show={show ? { title: show.title, time: `${formatShortDate(show.starts_at)}, ${formatTime(show.starts_at)}` } : null} setlists={chrome.data.setlists} />
       <SiteHeader siteName={settings.siteName} announcement={announcement} />
       <main id="konten">{children}</main>
       <PageTransition />

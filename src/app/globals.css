@@ -345,16 +345,17 @@ html[data-motion="reduced"] *::after {
   scroll-behavior: auto !important;
 }
 
-/* ───────────── Intro "tirai panggung" (dianimasikan GSAP, lihat components/intro.tsx) ───────────── */
+/* ───────────── Intro "tiket teater" (dianimasikan GSAP, lihat components/intro.tsx) ───────────── */
 .intro {
-  --gold: #e8c77d;
-  --gold-deep: #b98d3f;
+  --paper: #f6f2fd;
+  --ink: var(--color-plum-950);
   position: fixed;
   inset: 0;
   z-index: 100;
   overflow: hidden;
-  background: var(--color-plum-950);
-  color: #fff;
+  background: var(--paper);
+  color: var(--ink);
+  clip-path: inset(0 0 0 0);
   /* Pengaman: bila GSAP tak pernah jalan, intro tetap hilang sendiri. */
   animation: intro-failsafe 0.5s ease 6.5s forwards;
 }
@@ -370,280 +371,365 @@ html[data-intro="seen"] .intro {
     visibility: hidden;
   }
 }
-
-.intro-stage {
+/* Garis margin cetak */
+.intro::before {
+  content: "";
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(60% 45% at 50% 42%, rgb(131 82 238 / 0.35), transparent 70%),
-    linear-gradient(180deg, #160a33 0%, var(--color-plum-950) 55%, #12082a 100%);
+  inset: 14px;
+  border: 1px solid var(--color-plum-200);
+  pointer-events: none;
 }
-.intro-dots {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1.2px);
-  background-size: 20px 20px;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
-}
-.intro-beam {
-  position: absolute;
-  top: -10%;
-  width: 46vmax;
-  height: 120vh;
-  opacity: 0;
-  background: linear-gradient(180deg, rgb(232 199 125 / 0.32), rgb(160 125 250 / 0.12) 55%, transparent 85%);
-  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
-  filter: blur(6px);
-  mix-blend-mode: screen;
-}
-.intro-beam-l {
-  left: -8vmax;
-  transform-origin: 50% 0;
-}
-.intro-beam-r {
-  right: -8vmax;
-  transform-origin: 50% 0;
-}
-.intro-floor {
-  position: absolute;
-  inset: auto -10% 0;
-  height: 28%;
-  background: radial-gradient(50% 70% at 50% 100%, rgb(232 199 125 / 0.18), transparent 70%);
-}
-.intro-dust {
+.it-print {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
-.intro-dust i {
+.it-ghost {
   position: absolute;
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--gold);
-  box-shadow: 0 0 10px 2px rgb(232 199 125 / 0.55);
-  opacity: 0;
-}
-
-.intro-center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0 1.5rem 4rem;
-  text-align: center;
-}
-.intro-logo-wrap {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: clamp(6.5rem, 22vw, 9rem);
-  aspect-ratio: 1;
-}
-.intro-halo {
-  position: absolute;
-  inset: -45%;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgb(232 199 125 / 0.45), rgb(131 82 238 / 0.18) 45%, transparent 70%);
-  opacity: 0;
-}
-.intro-logo {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 1.75rem;
-  object-fit: cover;
-  box-shadow:
-    0 0 0 1px rgb(232 199 125 / 0.45),
-    0 25px 60px -20px rgb(0 0 0 / 0.8);
-  opacity: 0;
-}
-.intro-kicker {
-  margin-top: 1.75rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--gold);
-  clip-path: inset(0 100% 0 0);
-}
-.intro-title {
-  margin-top: 0.5rem;
-  display: flex;
-  overflow: hidden;
-  padding: 0 0.1em 0.08em;
-  font-family: var(--font-display);
-  font-size: clamp(4.2rem, 19vw, 10rem);
-  font-weight: 800;
-  line-height: 0.95;
-  letter-spacing: -0.055em;
-}
-.intro-char {
-  display: inline-block;
-  opacity: 0;
-}
-.intro-dot {
-  color: var(--color-plum-400);
-}
-.intro-sub {
-  margin-top: 0.25rem;
-  font-family: var(--font-display);
-  font-size: clamp(0.9rem, 3.4vw, 1.25rem);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.32em;
-  color: transparent;
-  -webkit-text-stroke: 1px rgb(255 255 255 / 0.75);
-  opacity: 0;
-}
-.intro-progress {
-  margin-top: 2.25rem;
-  width: min(22rem, 80vw);
-  opacity: 0;
-}
-.intro-progress-track {
-  display: block;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.12);
-}
-.intro-progress-bar {
-  display: block;
-  height: 100%;
-  transform: scaleX(0);
-  transform-origin: left;
-  background: linear-gradient(90deg, var(--color-plum-400), var(--gold));
-}
-.intro-progress-labels {
-  margin-top: 0.6rem;
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-display);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: rgb(255 255 255 / 0.55);
-}
-.intro-ribbon {
-  position: absolute;
-  inset: auto 0 1.4rem;
-  overflow: hidden;
-  border-block: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(255 255 255 / 0.04);
-  padding-block: 0.7rem;
-  opacity: 0;
-}
-.intro-ribbon-track {
-  display: flex;
-  width: max-content;
-}
-.intro-ribbon-row {
-  display: flex;
-}
-.intro-ribbon-row span {
-  display: inline-flex;
-  align-items: center;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
   white-space: nowrap;
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: rgb(255 255 255 / 0.85);
+  font-size: clamp(8rem, 24vw, 22rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-plum-200);
 }
-.intro-ribbon-row b {
-  margin-inline: 1.5rem;
-  color: var(--gold);
-  font-weight: 400;
-}
-.intro-hem {
+.it-crop {
   position: absolute;
-  inset: auto 0 0;
-  height: 6px;
-  background: repeating-linear-gradient(90deg, var(--gold) 0 14px, var(--gold-deep) 14px 18px);
-  box-shadow: 0 -6px 20px rgb(232 199 125 / 0.35);
+  width: 22px;
+  height: 22px;
+  border-color: var(--ink);
+  border-style: solid;
+  border-width: 0;
+}
+.it-crop-tl {
+  top: 5px;
+  left: 5px;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.it-crop-tr {
+  top: 5px;
+  right: 5px;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+.it-crop-bl {
+  bottom: 5px;
+  left: 5px;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.it-crop-br {
+  bottom: 5px;
+  right: 5px;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
+}
+.it-reg {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background:
+    linear-gradient(var(--ink), var(--ink)) center / 1.5px 100% no-repeat,
+    linear-gradient(var(--ink), var(--ink)) center / 100% 1.5px no-repeat;
+}
+.it-swatches {
+  position: absolute;
+  left: 30px;
+  bottom: 56px;
+  display: flex;
+  border: 1.5px solid var(--ink);
+}
+.it-swatch {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+.it-queue {
+  position: absolute;
+  display: grid;
+  gap: 0.55rem;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+.it-queue li {
+  max-width: 17rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.3rem 0.75rem;
+  white-space: nowrap;
+}
+.it-queue b {
+  color: var(--color-plum-600);
+}
+/* Asimetris & menjauh dari tiket di tengah */
+.it-queue-l {
+  left: 30px;
+  bottom: 96px;
+  justify-items: start;
+}
+.it-queue-r {
+  right: 30px;
+  top: 64px;
+  justify-items: end;
+}
+@media (max-width: 1100px), (max-height: 640px) {
+  .it-queue {
+    display: none;
+  }
+}
+.it-meta > * {
+  position: absolute;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+.it-meta-tl {
+  top: 28px;
+  left: 30px;
+}
+.it-meta-tr {
+  top: 28px;
+  right: 30px;
+  font-variant-numeric: tabular-nums;
+}
+.it-meta-bl {
+  bottom: 28px;
+  left: 30px;
+}
+.it-meta-bl b {
+  color: var(--color-plum-700);
+  font-variant-numeric: tabular-nums;
+}
+.it-meta-br {
+  bottom: 28px;
+  right: 30px;
 }
 
-/* Tirai beludru: lipatan vertikal + bayangan tepi + rumbai emas di bawah */
-.intro-curtain {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50.5%;
-  z-index: 2;
-  background:
-    linear-gradient(180deg, rgb(0 0 0 / 0.35), transparent 18%, transparent 82%, rgb(0 0 0 / 0.45)),
-    repeating-linear-gradient(
-      90deg,
-      #3d1a7a 0,
-      #5a29b3 3.2%,
-      #6d36d6 4.6%,
-      #4a2196 6.4%,
-      #2c1160 8.6%,
-      #3d1a7a 10%
-    );
-  box-shadow: inset 0 -10px 0 var(--gold-deep);
-}
-.intro-curtain::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 22px;
-  background: repeating-linear-gradient(90deg, var(--gold) 0 3px, transparent 3px 8px);
-  mask-image: linear-gradient(180deg, black, black 60%, transparent);
-}
-.intro-curtain-l {
-  left: 0;
-  transform-origin: left center;
-  box-shadow:
-    inset -40px 0 60px -20px rgb(0 0 0 / 0.65),
-    inset 0 -10px 0 var(--gold-deep);
-}
-.intro-curtain-r {
-  right: 0;
-  transform-origin: right center;
-  box-shadow:
-    inset 40px 0 60px -20px rgb(0 0 0 / 0.65),
-    inset 0 -10px 0 var(--gold-deep);
-}
-.intro-seal {
+.it-ticket {
   position: absolute;
   top: 50%;
   left: 50%;
-  z-index: 3;
-  width: clamp(5rem, 16vw, 7rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9.5rem;
+  width: min(44rem, calc(100vw - 2.5rem));
   translate: -50% -50%;
-  border-radius: 999px;
-  padding: 6px;
-  background: conic-gradient(from 0deg, var(--gold), var(--gold-deep), var(--gold), var(--gold-deep), var(--gold));
-  box-shadow: 0 20px 50px -10px rgb(0 0 0 / 0.7);
+  filter: drop-shadow(10px 12px 0 var(--ink));
 }
-.intro-seal img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1;
+.it-main {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-right: 0;
+  border-radius: 1.1rem 0 0 1.1rem;
+  background: #fff;
+  padding: 1.1rem 1.4rem 1.3rem;
+}
+.it-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0.6rem;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.it-name {
+  display: flex;
+  overflow: hidden;
+  margin-top: 0.6rem;
+  font-family: var(--font-display);
+  font-size: clamp(3.4rem, 11vw, 6.6rem);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.055em;
+}
+.it-name span {
+  display: inline-block;
+}
+.it-name-dot {
+  color: var(--color-plum-600);
+}
+.it-fields {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  border-top: 1px dashed var(--color-plum-300);
+  padding-top: 0.8rem;
+}
+.it-row dt {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.it-row dd {
+  margin-top: 0.2rem;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.it-stamp {
+  position: absolute;
+  right: 1.1rem;
+  top: 2.6rem;
+  display: grid;
+  place-items: center;
+  border: 4px double var(--color-plum-600);
+  border-radius: 0.6rem;
+  padding: 0.25rem 0.9rem 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-plum-600);
+  rotate: -12deg;
+  mix-blend-mode: multiply;
+  opacity: 0;
+}
+.it-stamp small {
+  font-size: 0.52rem;
+  letter-spacing: 0.24em;
+}
+/* Sobekan tiket dengan garis perforasi & lubang setengah lingkaran */
+.it-stub {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border: 2px solid var(--ink);
+  border-left: 2px dashed var(--ink);
+  border-radius: 0 1.1rem 1.1rem 0;
+  background: var(--color-plum-600);
+  padding: 1rem 0.75rem;
+  color: #fff;
+}
+.it-stub::before,
+.it-stub::after {
+  content: "";
+  position: absolute;
+  left: -13px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+}
+.it-stub::before {
+  top: -13px;
+}
+.it-stub::after {
+  bottom: -13px;
+}
+.it-stub img {
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 0.8rem;
+  border: 2px solid #fff;
   object-fit: cover;
 }
-.intro-skip-btn {
-  position: absolute;
-  right: 1rem;
-  top: 1rem;
-  z-index: 5;
-  border-radius: 999px;
-  padding: 0.5rem 0.9rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: rgb(255 255 255 / 0.85);
-  background: rgb(255 255 255 / 0.08);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
-  backdrop-filter: blur(6px);
+.it-admit {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
-.intro-skip-btn:hover {
-  background: rgb(255 255 255 / 0.16);
+.it-barcode {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 2.6rem;
+}
+.it-bar {
+  display: block;
+  height: 100%;
+  background: #fff;
+  transform-origin: bottom;
+}
+.it-skip {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  translate: -50% 0;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.it-skip:hover {
+  background: var(--color-plum-50);
+}
+@media (max-width: 640px) {
+  .it-ticket {
+    grid-template-columns: minmax(0, 1fr) 6.2rem;
+    filter: drop-shadow(6px 8px 0 var(--ink));
+  }
+  .it-main {
+    padding: 0.9rem 1rem 1rem;
+  }
+  .it-head span:last-child {
+    display: none;
+  }
+  .it-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.45rem;
+  }
+  .it-stamp {
+    top: auto;
+    bottom: 0.9rem;
+    font-size: 1.35rem;
+  }
+  .it-stub img {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+  .it-admit {
+    font-size: 0.7rem;
+    writing-mode: vertical-rl;
+  }
+  .it-meta-tl,
+  .it-meta-br,
+  .it-swatches,
+  .it-ghost {
+    display: none;
+  }
+  .it-skip {
+    bottom: 56px;
+  }
 }
 html[data-motion="reduced"] .intro {
   display: none;

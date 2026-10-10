@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 
 const SESSION_KEY = "ff-intro-seen";
-const SETLIST_LABELS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08"];
 
 /**
  * Skrip inline (dijalankan sebelum render pertama): pasang preferensi animasi pengunjung
@@ -15,13 +14,22 @@ function finish() {
   document.documentElement.dataset.intro = "seen";
 }
 
+const TZ = "Asia/Jakarta";
+const clockFmt = new Intl.DateTimeFormat("id-ID", { timeZone: TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+const dateFmt = new Intl.DateTimeFormat("id-ID", { timeZone: TZ, weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+
+export type IntroShow = { title: string; time: string } | null;
+
+const BARS = [3, 1, 2, 1, 1, 3, 2, 1, 3, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 2, 1, 1, 3, 2, 1, 2, 3, 1, 1, 2];
+
 /**
- * Intro "tirai panggung" (GSAP): segel logo di tirai → tirai beludru tersibak →
- * lampu sorot menyapu, debu emas melayang, logo & judul muncul, bar setlist M01–M08 →
- * panggung terangkat menampilkan situs. Sekali per sesi, bisa dilewati, dan tidak tampil
- * bila pengunjung memilih "Kurangi animasi". Bila GSAP gagal dimuat, CSS menutup intro otomatis.
+ * Intro "tiket teater" (GSAP): tiket naik dari bawah, kolom terisi seperti dicetak,
+ * barcode tergambar, cap "HADIR" dihentakkan, sobekan robek di garis perforasi,
+ * lalu kertas latar tergulung naik menampilkan situs. Sekali per sesi, bisa dilewati,
+ * dan tidak tampil bila pengunjung memilih "Kurangi animasi". Bila GSAP gagal dimuat,
+ * CSS menutup intro otomatis.
  */
-export function Intro({ name, setlists }: { name: string; setlists: string[] }) {
+export function Intro({ name, show, setlists }: { name: string; show: IntroShow; setlists: string[] }) {
   const root = useRef<HTMLDivElement>(null);
   const skipRef = useRef<() => void>(() => finish());
 
@@ -34,76 +42,57 @@ export function Intro({ name, setlists }: { name: string; setlists: string[] }) 
       /* sessionStorage tidak tersedia: intro tetap tampil di halaman ini saja */
     }
 
+    // Jam & tanggal WIB yang berdetak sungguhan.
+    const clock = el.querySelector<HTMLElement>("[data-clock]");
+    const today = el.querySelector<HTMLElement>("[data-today]");
+    const tick = () => {
+      const now = new Date();
+      if (clock) clock.textContent = `${clockFmt.format(now).replace(/\./g, ":")} WIB`;
+      if (today) today.textContent = dateFmt.format(now);
+    };
+    tick();
+    const clockId = window.setInterval(tick, 1000);
+
     let killed = false;
     let cleanup = () => {};
 
     (async () => {
-      const [{ gsap }, { CustomEase }] = await Promise.all([import("gsap"), import("gsap/CustomEase")]);
+      const { gsap } = await import("gsap");
       if (killed) return;
-      gsap.registerPlugin(CustomEase);
-      CustomEase.create("ffCurtain", "M0,0 C0.62,0 0.18,1 1,1");
-      CustomEase.create("ffLift", "M0,0 C0.76,0 0.24,1 1,1");
       el.classList.add("intro-js");
-
       const q = gsap.utils.selector(el);
+
       const ctx = gsap.context(() => {
-        // Debu emas: melayang naik terus-menerus di panggung.
-        q(".intro-dust i").forEach((dot) => {
-          gsap.set(dot, {
-            xPercent: -50,
-            left: `${gsap.utils.random(2, 98)}%`,
-            top: `${gsap.utils.random(40, 105)}%`,
-            scale: gsap.utils.random(0.4, 1.3),
-            opacity: 0,
-          });
-          gsap.to(dot, {
-            y: () => -gsap.utils.random(160, 420),
-            x: () => gsap.utils.random(-40, 40),
-            opacity: () => gsap.utils.random(0.35, 0.95),
-            duration: () => gsap.utils.random(2.2, 4.2),
-            delay: () => gsap.utils.random(0.4, 1.6),
-            ease: "sine.out",
-            repeat: -1,
-            repeatRefresh: true,
-          });
-        });
+        const percent = { v: 0 };
+        const pctEl = q("[data-pct]")[0] as HTMLElement | undefined;
+        const tl = gsap.timeline({ defaults: { ease: "power3.out" }, onComplete: finish });
 
-        // Pita setlist berjalan.
-        gsap.to(q(".intro-ribbon-track"), { xPercent: -50, duration: 14, ease: "none", repeat: -1 });
-
-        const tl = gsap.timeline({ defaults: { ease: "expo.out" }, onComplete: finish });
-
-        tl.from(q(".intro-seal"), { scale: 0.2, rotate: -40, opacity: 0, duration: 0.7, ease: "back.out(2)" })
-          .to(q(".intro-seal"), { scale: 1.6, opacity: 0, duration: 0.45, ease: "power2.in" }, 0.75)
-          .to(q(".intro-curtain-l"), { xPercent: -101, skewX: 4, duration: 1.15, ease: "ffCurtain" }, 0.8)
-          .to(q(".intro-curtain-r"), { xPercent: 101, skewX: -4, duration: 1.15, ease: "ffCurtain" }, 0.8)
-          .fromTo(q(".intro-beam-l"), { rotate: -38, opacity: 0 }, { rotate: 10, opacity: 1, duration: 1.6, ease: "power2.inOut" }, 1.0)
-          .fromTo(q(".intro-beam-r"), { rotate: 38, opacity: 0 }, { rotate: -10, opacity: 1, duration: 1.6, ease: "power2.inOut" }, 1.05)
-          .fromTo(q(".intro-halo"), { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.1 }, 1.15)
-          .fromTo(
-            q(".intro-logo"),
-            { scale: 0.3, rotate: -24, opacity: 0, filter: "blur(10px)" },
-            { scale: 1, rotate: 0, opacity: 1, filter: "blur(0px)", duration: 1, ease: "back.out(1.6)" },
-            1.2,
-          )
-          .fromTo(q(".intro-kicker"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.7, ease: "power3.inOut" }, 1.45)
-          .fromTo(q(".intro-char"), { yPercent: 120, rotate: 10, opacity: 0 }, { yPercent: 0, rotate: 0, opacity: 1, duration: 0.9, stagger: 0.055 }, 1.5)
-          .fromTo(q(".intro-sub"), { letterSpacing: "0.9em", opacity: 0 }, { letterSpacing: "0.32em", opacity: 1, duration: 1.1 }, 1.8)
-          .fromTo(q(".intro-progress"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5 }, 1.85)
-          .fromTo(q(".intro-progress-bar"), { scaleX: 0 }, { scaleX: 1, duration: 1.5, ease: "power1.inOut" }, 1.9)
-          .fromTo(q(".intro-progress-labels span"), { opacity: 0.25 }, { opacity: 1, color: "#e8c77d", duration: 0.2, stagger: 0.18, ease: "none" }, 1.9)
-          .fromTo(q(".intro-ribbon"), { yPercent: 100, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.8 }, 1.6)
-          .to(q(".intro-logo-wrap"), { y: -6, duration: 0.6, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2.4)
-          .addLabel("exit", 3.55)
-          .to(q(".intro-center"), { yPercent: -18, opacity: 0, duration: 0.55, ease: "power2.in" }, "exit")
-          .to(el, { yPercent: -100, duration: 0.95, ease: "ffLift" }, "exit+=0.15");
+        tl.from(q(".it-meta > *"), { y: 14, autoAlpha: 0, duration: 0.5, stagger: 0.06 }, 0)
+          .from(q(".it-crop"), { scale: 0, autoAlpha: 0, duration: 0.4, stagger: 0.05, ease: "back.out(2)" }, 0)
+          .from(q(".it-reg"), { rotate: -180, scale: 0, autoAlpha: 0, duration: 0.7 }, 0.1)
+          .from(q(".it-swatch"), { scaleY: 0, duration: 0.35, stagger: 0.04, transformOrigin: "bottom" }, 0.2)
+          .from(q(".it-ghost"), { xPercent: -8, autoAlpha: 0, duration: 1.2, ease: "expo.out" }, 0.1)
+          .from(q(".it-queue li"), { x: (i) => (i % 2 ? 30 : -30), autoAlpha: 0, duration: 0.5, stagger: 0.05 }, 0.3)
+          .to(percent, { v: 100, duration: 2.1, ease: "power1.inOut", onUpdate: () => void (pctEl && (pctEl.textContent = `${Math.round(percent.v)}%`)) }, 0.1)
+          .from(q(".it-ticket"), { yPercent: 140, rotate: -9, duration: 0.85, ease: "back.out(1.25)" }, 0.15)
+          .from(q(".it-name span"), { yPercent: 105, duration: 0.6, ease: "expo.out", stagger: 0.04 }, 0.7)
+          .from(q(".it-row"), { autoAlpha: 0, x: -10, duration: 0.3, stagger: 0.07 }, 0.75)
+          .from(q(".it-type"), { clipPath: "inset(0 100% 0 0)", duration: 0.5, ease: "steps(14)", stagger: 0.12 }, 0.85)
+          .from(q(".it-bar"), { scaleY: 0, duration: 0.25, stagger: 0.012, ease: "power2.out" }, 1.0)
+          .fromTo(q(".it-stamp"), { scale: 2.4, rotate: -28, autoAlpha: 0 }, { scale: 1, rotate: -12, autoAlpha: 1, duration: 0.32, ease: "power4.in" }, 1.75)
+          .to(q(".it-ticket"), { x: 4, duration: 0.05, yoyo: true, repeat: 3, ease: "none" }, 2.07)
+          .addLabel("tear", 2.45)
+          .to(q(".it-stub"), { x: 60, y: 280, rotate: 24, autoAlpha: 0, duration: 0.8, ease: "power2.in" }, "tear")
+          .to(q(".it-main"), { x: -40, rotate: -2, duration: 0.3, ease: "power2.out" }, "tear")
+          .to(q(".it-ticket"), { yPercent: -170, rotate: -6, duration: 0.6, ease: "power3.in" }, "tear+=0.3")
+          .to(q(".it-meta, .it-print"), { autoAlpha: 0, duration: 0.25 }, "tear+=0.3")
+          .to(el, { clipPath: "inset(0 0 100% 0)", duration: 0.7, ease: "expo.inOut" }, "tear+=0.6");
 
         skipRef.current = () => {
-          if (tl.time() < tl.labels.exit) tl.seek("exit");
-          tl.timeScale(1.6);
+          if (tl.time() < tl.labels.tear) tl.seek("tear");
+          tl.timeScale(1.8);
         };
       }, el);
-
       cleanup = () => ctx.revert();
     })().catch(() => finish());
 
@@ -111,81 +100,103 @@ export function Intro({ name, setlists }: { name: string; setlists: string[] }) 
     window.addEventListener("keydown", onKey);
     return () => {
       killed = true;
+      window.clearInterval(clockId);
       window.removeEventListener("keydown", onKey);
       cleanup();
     };
   }, []);
 
-  const [first, ...rest] = name.split(" ");
-  const ribbon = setlists.length > 0 ? setlists : ["ZyFriends", "Fritzy Force", "JKT48"];
+  const first = name.split(" ")[0] || "Fritzy";
+  const queue = (setlists.length > 0 ? setlists : ["Fritzy Force", "ZyFriends"]).slice(0, 6);
 
   return (
     <div ref={root} className="intro" aria-hidden="true">
-      <div className="intro-stage">
-        <div className="intro-dots" />
-        <div className="intro-beam intro-beam-l" />
-        <div className="intro-beam intro-beam-r" />
-        <div className="intro-floor" />
-        <div className="intro-dust">
-          {Array.from({ length: 28 }, (_, i) => (
-            <i key={i} />
+      {/* Elemen percetakan: tanda potong, target registrasi, strip warna, antrean setlist */}
+      <div className="it-print">
+        <span className="it-ghost">TIKET·48</span>
+        <span className="it-crop it-crop-tl" />
+        <span className="it-crop it-crop-tr" />
+        <span className="it-crop it-crop-bl" />
+        <span className="it-crop it-crop-br" />
+        <span className="it-reg" />
+        <span className="it-swatches">
+          {["#1d0e40", "#331a66", "#5a29b3", "#6d36d6", "#a07dfa", "#ddd1ff", "#e8c77d"].map((c) => (
+            <i key={c} className="it-swatch" style={{ background: c }} />
           ))}
-        </div>
+        </span>
+        <ul className="it-queue it-queue-l">
+          {queue.map((s, i) => (
+            <li key={`l${i}`}>
+              <b>M{String(i + 1).padStart(2, "0")}</b> {s}
+            </li>
+          ))}
+        </ul>
+        <ul className="it-queue it-queue-r">
+          {[...queue].reverse().map((s, i) => (
+            <li key={`r${i}`}>
+              {s} <b>✦</b>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="it-meta">
+        <span className="it-meta-tl">Fritzy Force — fanbase untuk Fritzy JKT48</span>
+        <span className="it-meta-tr" data-clock>
+          --:--:-- WIB
+        </span>
+        <span className="it-meta-bl">
+          Mencetak tiket… <b data-pct>0%</b>
+        </span>
+        <span className="it-meta-br">ZyFriends · Edisi web</span>
+      </div>
 
-        <div className="intro-center">
-          <div className="intro-logo-wrap">
-            <span className="intro-halo" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.webp" alt="" width={256} height={256} className="intro-logo" />
+      <div className="it-ticket">
+        <div className="it-main">
+          <div className="it-head">
+            <span>JKT48 Theater · Fanbase pass</span>
+            <span>Edisi web</span>
           </div>
-          <p className="intro-kicker">Fanbase untuk Fritzy JKT48</p>
-          <p className="intro-title">
-            {Array.from(first).map((ch, i) => (
-              <span key={i} className="intro-char">
-                {ch}
-              </span>
+          <p className="it-name">
+            {Array.from(first).map((c, i) => (
+              <span key={i}>{c}</span>
             ))}
-            <span className="intro-char intro-dot">.</span>
+            <span className="it-name-dot">.</span>
           </p>
-          <p className="intro-sub">{rest.length > 0 ? rest.join(" ") : "Force"}</p>
-          <div className="intro-progress">
-            <span className="intro-progress-track">
-              <span className="intro-progress-bar" />
-            </span>
-            <span className="intro-progress-labels">
-              {SETLIST_LABELS.map((m) => (
-                <span key={m}>{m}</span>
-              ))}
-            </span>
-          </div>
+          <dl className="it-fields">
+            <div className="it-row">
+              <dt>Dicetak</dt>
+              <dd className="it-type" data-today>
+                —
+              </dd>
+            </div>
+            <div className="it-row">
+              <dt>{show ? "Show berikutnya" : "Show"}</dt>
+              <dd className="it-type">{show ? `${show.title} · ${show.time}` : name}</dd>
+            </div>
+            <div className="it-row">
+              <dt>Kursi</dt>
+              <dd className="it-type">ZyFriends</dd>
+            </div>
+          </dl>
+          <span className="it-stamp">
+            Hadir
+            <small>Fritzy Force</small>
+          </span>
         </div>
-
-        <div className="intro-ribbon">
-          <div className="intro-ribbon-track">
-            {[0, 1].map((dup) => (
-              <div key={dup} className="intro-ribbon-row">
-                {[...ribbon, ...ribbon, ...ribbon].map((s, i) => (
-                  <span key={i}>
-                    {s}
-                    <b>✦</b>
-                  </span>
-                ))}
-              </div>
+        <div className="it-stub">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.webp" alt="" width={256} height={256} />
+          <span className="it-admit">Admit one</span>
+          <span className="it-barcode">
+            {BARS.map((w, i) => (
+              <i key={i} className="it-bar" style={{ width: `${w}px` }} />
             ))}
-          </div>
+          </span>
         </div>
-        <div className="intro-hem" />
       </div>
 
-      <div className="intro-curtain intro-curtain-l" />
-      <div className="intro-curtain intro-curtain-r" />
-      <div className="intro-seal">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.webp" alt="" width={256} height={256} />
-      </div>
-
-      <button type="button" className="intro-skip-btn" onClick={() => skipRef.current()} tabIndex={-1}>
-        Lewati intro →
+      <button type="button" className="it-skip" onClick={() => skipRef.current()} tabIndex={-1}>
+        Lewati →
       </button>
     </div>
   );

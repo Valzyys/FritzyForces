@@ -1,0 +1,7 @@
+# Salin menjadi .dev.vars untuk pengembangan lokal. Jangan commit nilai asli.
+# Kunci API JKT48Connect (server-side saja) untuk sinkronisasi jadwal teater.
+JKT48_API_KEY=
+# Token sekali pakai untuk membuat akun admin pertama di /admin/setup.
+ADMIN_SETUP_TOKEN=ganti-dengan-string-acak-panjang
+# Rahasia untuk endpoint cron /api/cron/sync.
+CRON_SECRET=ganti-dengan-string-acak-panjang

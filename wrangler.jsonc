@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fritzyforce",
+  // worker.ts membungkus worker OpenNext dan menambahkan handler cron (scheduled).
+  "main": "worker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fritzyforce-db",
+      // Ganti dengan ID dari `wrangler d1 create fritzyforce-db`.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fritzyforce-media" }],
+  "triggers": {
+    // Sinkronisasi jadwal teater (JKT48Connect) + rekap kegiatan (Google Sheets) tiap 3 jam.
+    "crons": ["17 */3 * * *"]
+  },
+  "vars": {
+    "SITE_URL": "https://fritzyforce.my.id",
+    "FRITZY_MEMBER_KEY": "fritzy",
+    "RECAP_SHEET_ID": "13B6xHPxQP2tzHb0pE1F_UVoDbDbfR6BZa8IS2ujF2L8"
+  }
+}

@@ -1,5 +1,6 @@
 import { SiteHeader, type Announcement } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { INTRO_BOOT_SCRIPT, Intro } from "@/components/intro";
 import { EMPTY_CHROME, getSiteChrome } from "@/lib/data";
 import { safeQuery } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
@@ -18,6 +19,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       : null;
   return (
     <>
+      {/* Menandai intro sudah tampil (atau reduced-motion) sebelum render, agar tidak berkedip. */}
+      <script dangerouslySetInnerHTML={{ __html: INTRO_BOOT_SCRIPT }} />
+      <Intro name={settings.siteName} setlists={chrome.data.setlists} />
       <SiteHeader siteName={settings.siteName} announcement={announcement} />
       <main id="konten">{children}</main>
       <SiteFooter

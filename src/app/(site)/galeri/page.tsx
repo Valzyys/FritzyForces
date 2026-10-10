@@ -5,7 +5,7 @@ import { listAlbums } from "@/lib/data";
 import { safeQuery } from "@/lib/db";
 import { formatDate } from "@/lib/time";
 import { mediaUrl } from "@/lib/url";
-import { EmptyState, ErrorNotice, FilterChips, PageHeader, strParam } from "@/components/ui";
+import { ErrorNotice, FilterChips, PageHeader, StatStrip, strParam } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Galeri",
@@ -27,6 +27,15 @@ export default async function GalleryPage({ searchParams }: { searchParams: Prom
         kicker="Galeri"
         title="Momen yang kami abadikan"
         description="Bukan arsip semua foto — hanya project Fritzy Force dan kegiatan ZyFriends yang paling berkesan."
+        aside={
+          <StatStrip
+            items={[
+              { value: albums.data.length, label: "Album" },
+              { value: albums.data.reduce((a, b) => a + b.photo_count, 0), label: "Foto" },
+              { value: albums.data.filter((a) => a.kind === "project").length, label: "Project FF" },
+            ]}
+          />
+        }
       />
       <div className="shell py-10">
         <FilterChips
@@ -38,9 +47,15 @@ export default async function GalleryPage({ searchParams }: { searchParams: Prom
           {albums.failed ? (
             <ErrorNotice />
           ) : shown.length === 0 ? (
-            <EmptyState title="Belum ada album" icon={<Images className="size-5" aria-hidden />}>
-              Dokumentasi akan ditambahkan oleh admin.
-            </EmptyState>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {["STS", "100 Show", "Kegiatan ZyFriends"].map((t, i) => (
+                <div key={t} className={`bg-stripes flex aspect-[4/3] flex-col justify-end rounded-[1.5rem] p-6 ring-1 ${i === 0 ? "bg-plum-600 text-white ring-plum-700 [--stripe-color:rgb(255_255_255/0.08)]" : "bg-mist ring-line"}`}>
+                  <Images className="size-7 opacity-70" aria-hidden />
+                  <p className="mt-3 font-display text-xl font-bold">{t}</p>
+                  <p className="text-sm opacity-80">Dokumentasi segera diunggah</p>
+                </div>
+              ))}
+            </div>
           ) : (
             <ul className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
               {shown.map((a) => {

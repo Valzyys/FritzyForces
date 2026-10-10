@@ -73,23 +73,54 @@ export function PageHeader({
   title,
   description,
   children,
+  ghost,
+  aside,
 }: {
   kicker?: string;
   title: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
+  /** Kata besar bergaris di latar kanan (dekoratif). */
+  ghost?: string;
+  /** Konten samping, mis. statistik ringkas. */
+  aside?: ReactNode;
 }) {
+  const word = ghost ?? kicker;
   return (
     <header className="relative overflow-hidden border-b border-line bg-mist">
-      <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-plum-100/70" />
-      <div aria-hidden className="pointer-events-none absolute right-24 top-20 size-24 rounded-full border border-plum-200" />
-      <div className="shell relative py-12 sm:py-16">
-        {kicker && <p className="kicker animate-fade">{kicker}</p>}
-        <h1 className="mt-3 max-w-3xl animate-rise text-4xl font-bold leading-[1.05] text-ink sm:text-5xl">{title}</h1>
-        {description && <div className="mt-4 max-w-2xl animate-rise text-lg leading-relaxed text-ink-soft [animation-delay:60ms]">{description}</div>}
-        {children && <div className="mt-6">{children}</div>}
+      <div aria-hidden className="bg-dots pointer-events-none absolute inset-0 [mask-image:linear-gradient(100deg,transparent_25%,black_75%)]" />
+      {word && !aside && (
+        <p
+          aria-hidden
+          className="text-outline pointer-events-none absolute -right-3 -bottom-[0.2em] hidden select-none font-display text-[10rem] leading-none font-extrabold tracking-[-0.06em] [--outline-color:var(--color-plum-200)] md:block lg:text-[13rem]"
+        >
+          {word}
+        </p>
+      )}
+      <div className="shell relative grid gap-8 py-10 sm:py-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <div>
+          {kicker && <p className="kicker animate-fade">{kicker}</p>}
+          <h1 className="mt-3 max-w-3xl animate-rise text-4xl font-bold leading-[1.02] text-ink sm:text-[3.4rem]">{title}</h1>
+          {description && <div className="mt-4 max-w-2xl animate-rise text-lg leading-relaxed text-ink-soft [animation-delay:60ms]">{description}</div>}
+          {children && <div className="mt-6">{children}</div>}
+        </div>
+        {aside && <div className="relative animate-rise [animation-delay:120ms]">{aside}</div>}
       </div>
     </header>
+  );
+}
+
+/** Deretan angka ringkas untuk header halaman. Angka 0 tetap ditampilkan apa adanya. */
+export function StatStrip({ items }: { items: { value: ReactNode; label: string }[] }) {
+  return (
+    <dl className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+      {items.map((it) => (
+        <div key={it.label} className="min-w-28 rounded-2xl bg-white px-4 py-3 ring-1 ring-line">
+          <dt className="text-xs font-semibold text-ink-faint">{it.label}</dt>
+          <dd className="mt-0.5 font-display text-2xl font-bold text-ink tabular-nums">{it.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

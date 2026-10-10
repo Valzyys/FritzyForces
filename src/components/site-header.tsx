@@ -12,7 +12,9 @@ function isActive(pathname: string, match: readonly string[]) {
   return match.some((m) => pathname === m || pathname.startsWith(`${m}/`));
 }
 
-export function SiteHeader({ siteName }: { siteName: string }) {
+export type Announcement = { label: string; text: string; href: string } | null;
+
+export function SiteHeader({ siteName, announcement }: { siteName: string; announcement: Announcement }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
@@ -42,7 +44,23 @@ export function SiteHeader({ siteName }: { siteName: string }) {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line/80 bg-white/85 backdrop-blur-md supports-[backdrop-filter]:bg-white/75">
+    <>
+    {announcement && (
+      <div id="top" className="relative z-50 bg-plum-950 text-white">
+        <Link href={announcement.href} className="shell flex h-9 items-center justify-center gap-2 text-[0.8rem] sm:justify-between">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="relative flex size-2 shrink-0">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-plum-400 opacity-60 motion-reduce:hidden" />
+              <span className="relative inline-flex size-2 rounded-full bg-plum-300" />
+            </span>
+            <span className="shrink-0 font-bold uppercase tracking-[0.12em] text-plum-300">{announcement.label}</span>
+            <span className="truncate font-medium">{announcement.text}</span>
+          </span>
+          <span className="hidden shrink-0 font-semibold text-plum-200 underline-offset-4 hover:underline sm:inline">Lihat detail →</span>
+        </Link>
+      </div>
+    )}
+    <header {...(announcement ? {} : { id: "top" })} className="sticky top-0 z-40 border-b border-line/80 bg-white/85 backdrop-blur-md supports-[backdrop-filter]:bg-white/75">
       <a href="#konten" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-full focus:bg-plum-600 focus:px-4 focus:py-2 focus:text-white">
         Lewati ke konten
       </a>
@@ -52,7 +70,7 @@ export function SiteHeader({ siteName }: { siteName: string }) {
         </Link>
 
         <nav aria-label="Navigasi utama" className="hidden lg:block">
-          <ul className="flex items-center gap-1">
+          <ul className="flex items-center gap-0.5 rounded-full bg-mist p-1 ring-1 ring-line">
             {MAIN_NAV.map((item) => {
               const active = isActive(pathname, item.match);
               return (
@@ -61,8 +79,8 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cx(
-                      "relative inline-flex h-10 items-center rounded-full px-3.5 text-[0.925rem] font-semibold transition-colors",
-                      active ? "bg-plum-50 text-plum-800" : "text-ink-soft hover:text-ink",
+                      "relative inline-flex h-9 items-center rounded-full px-3.5 text-[0.9rem] font-semibold transition-colors",
+                      active ? "bg-white text-plum-800 shadow-[var(--shadow-soft)] ring-1 ring-line" : "text-ink-soft hover:text-ink",
                     )}
                   >
                     {item.label}
@@ -93,9 +111,13 @@ export function SiteHeader({ siteName }: { siteName: string }) {
         <div
           id="menu-seluler"
           ref={panelRef}
-          className="fixed inset-x-0 bottom-0 top-16 z-40 animate-fade overflow-y-auto bg-white lg:hidden"
+          className="bg-dots fixed inset-x-0 bottom-0 top-16 z-40 animate-fade overflow-y-auto bg-white lg:hidden"
         >
           <nav aria-label="Navigasi seluler" className="shell py-6">
+            <p className="mb-2 flex justify-between border-b border-dashed border-line-strong pb-3 font-display text-sm font-bold text-ink-faint">
+              <span>Setlist situs</span>
+              <span>{MAIN_NAV.length} lagu</span>
+            </p>
             <ul className="divide-y divide-line">
               {MAIN_NAV.map((item, i) => {
                 const active = isActive(pathname, item.match);
@@ -105,11 +127,12 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                       href={item.href}
                       aria-current={active ? "page" : undefined}
                       className={cx(
-                        "flex items-center justify-between py-4 font-display text-2xl font-semibold",
+                        "flex items-center gap-4 py-3.5 font-display text-2xl font-semibold",
                         active ? "text-plum-700" : "text-ink",
                       )}
                     >
-                      {item.label}
+                      <span className="w-9 text-sm font-bold text-plum-400 tabular-nums">M{String(i + 1).padStart(2, "0")}</span>
+                      <span className="flex-1">{item.label}</span>
                       {active && <span className="size-2 rounded-full bg-plum-600" aria-hidden />}
                     </Link>
                   </li>
@@ -120,5 +143,6 @@ export function SiteHeader({ siteName }: { siteName: string }) {
         </div>
       )}
     </header>
+    </>
   );
 }

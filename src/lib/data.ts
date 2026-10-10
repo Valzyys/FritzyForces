@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { all, first } from "./db";
 import { parseJsonArray, type LabelValue, type LinkItem } from "./json";
 import { todayWib } from "./time";
@@ -382,4 +383,67 @@ export async function listApprovedMessages(page: number, perPage: number) {
 
 export async function listCommunities(): Promise<Community[]> {
   return all<Community>("SELECT * FROM communities ORDER BY kind ASC, sort_order ASC, name ASC");
+}
+
+// ───────────── Data bersama untuk header/footer & beranda ─────────────
+
+export type SiteChrome = {
+  nextShow: EventRow | null;
+  setlists: string[];
+  tickerItems: { label: string; meta: string }[];
+  counts: { activities: number; timeline: number; discography: number; photos: number; messages: number; posts: number };
+};
+
+export const getSiteChrome = cache(async (): Promise<SiteChrome> => {
+  const [nextShow, setlists, recent, counts] = await Promise.all([
+    getNextTheaterShow(),
+    all<{ show: string }>("SELECT show FROM show_recaps GROUP BY show ORDER BY MIN(date) ASC"),
+    recentActivities(8),
+    first<SiteChrome["counts"]>(
+      `SELECT
+        (SELECT COUNT(*) FROM activities) AS activities,
+        (SELECT COUNT(*) FROM timeline) AS timeline,
+        (SELECT COUNT(*) FROM discography) AS discography,
+        (SELECT COUNT(*) FROM photos p JOIN albums a ON a.id = p.album_id WHERE a.published = 1) AS photos,
+        (SELECT COUNT(*) FROM fanwall WHERE status = 'approved') AS messages,
+        (SELECT COUNT(*) FROM posts WHERE status = 'published' AND published_at <= ?) AS posts`,
+      new Date().toISOString(),
+    ),
+  ]);
+  return {
+    nextShow,
+    setlists: setlists.map((s) => s.show),
+    tickerItems: recent.map((a) => ({ label: a.title, meta: a.type })),
+    counts: counts ?? { activities: 0, timeline: 0, discography: 0, photos: 0, messages: 0, posts: 0 },
+  };
+});
+
+export const EMPTY_CHROME: SiteChrome = {
+  nextShow: null,
+  setlists: [],
+  tickerItems: [],
+  counts: { activities: 0, timeline: 0, discography: 0, photos: 0, messages: 0, posts: 0 },
+};
+
+/** Jumlah kegiatan per tahun & jenis, untuk grafik ringkas di halaman Kegiatan. */
+export async function activityBreakdown(): Promise<{ year: string; type: string; n: number }[]> {
+  return all(
+    `SELECT substr(date,1,4) AS year, type, COUNT(*) AS n FROM activities
+     WHERE ${quietFilter} GROUP BY year, type ORDER BY year ASC`,
+    ...QUIET_ACTIVITY_TYPES,
+  );
+}
+
+/** Tanggal (YYYY-MM-DD, WIB) yang memiliki jadwal publik dalam satu bulan. */
+export async function eventDaysInMonth(year: number, month: number): Promise<{ day: string; categories: string }[]> {
+  const start = new Date(Date.UTC(year, month - 1, 1, -7)).toISOString();
+  const end = new Date(Date.UTC(year, month, 1, -7)).toISOString();
+  return all(
+    `SELECT substr(datetime(starts_at, '+7 hours'), 1, 10) AS day, GROUP_CONCAT(DISTINCT category) AS categories
+     FROM events WHERE ${publicCategoryFilter} AND starts_at >= ? AND starts_at < ? AND status != 'cancelled'
+     GROUP BY day`,
+    ...PRIVATE_EVENT_CATEGORIES,
+    start,
+    end,
+  );
 }

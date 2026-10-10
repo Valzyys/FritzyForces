@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { activityFacets, listActivities } from "@/lib/data";
+import { activityBreakdown, activityFacets, listActivities } from "@/lib/data";
 import { safeQuery } from "@/lib/db";
 import { ActivityItem } from "@/components/content";
-import { EmptyState, ErrorNotice, FilterChips, PageHeader, Pagination, pageParam, strParam } from "@/components/ui";
+import { EmptyState, ErrorNotice, FilterChips, PageHeader, Pagination, StatStrip, pageParam, strParam } from "@/components/ui";
+import { ActivityChart } from "@/components/activity-chart";
 
 export const metadata: Metadata = {
   title: "Rekap Kegiatan",
@@ -18,7 +19,11 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
   const facets = await safeQuery(() => activityFacets(), { years: [], types: [] });
   const year = facets.data.years.includes(strParam(sp.tahun)) ? strParam(sp.tahun) : "";
   const type = facets.data.types.includes(strParam(sp.jenis)) ? strParam(sp.jenis) : "";
-  const list = await safeQuery(() => listActivities({ year, type, page, perPage: PER_PAGE }), { items: [], total: 0 });
+  const [list, breakdown] = await Promise.all([
+    safeQuery(() => listActivities({ year, type, page, perPage: PER_PAGE }), { items: [], total: 0 }),
+    safeQuery(() => activityBreakdown(), []),
+  ]);
+  const totalAll = breakdown.data.reduce((a, b) => a + b.n, 0);
 
   const qs = (over: Record<string, string>) => {
     const p = new URLSearchParams({ ...(year && { tahun: year }), ...(type && { jenis: type }), ...over });
@@ -33,8 +38,18 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
         kicker="Kegiatan"
         title="Rekap kegiatan Fritzy"
         description="Diperbarui otomatis dari rekap yang dikelola tim Fritzy Force."
+        aside={
+          <StatStrip
+            items={[
+              { value: totalAll, label: "Kegiatan" },
+              { value: facets.data.years.length, label: "Tahun" },
+              { value: facets.data.types.length, label: "Jenis" },
+            ]}
+          />
+        }
       />
-      <div className="shell py-10">
+      <div className="shell grid grid-cols-1 gap-8 py-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0">
         <div className="space-y-3">
           <FilterChips
             label="Filter tahun"
@@ -65,6 +80,10 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
             </>
           )}
         </div>
+        </div>
+        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start" aria-label="Ringkasan kegiatan">
+          <ActivityChart rows={breakdown.data} />
+        </aside>
       </div>
     </>
   );

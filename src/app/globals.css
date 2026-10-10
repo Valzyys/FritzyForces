@@ -42,6 +42,8 @@
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --animate-rise: rise 0.6s var(--ease-out-quart) both;
   --animate-fade: fade 0.4s ease-out both;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-spin-slow: spin 24s linear infinite;
 
   @keyframes rise {
     from {
@@ -51,6 +53,14 @@
     to {
       opacity: 1;
       transform: none;
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
     }
   }
   @keyframes fade {
@@ -272,7 +282,49 @@
   }
 }
 
+@layer utilities {
+  /* Pola latar halus — memberi tekstur tanpa mengganggu keterbacaan. */
+  .bg-dots {
+    background-image: radial-gradient(var(--dot-color, rgb(109 54 214 / 0.16)) 1px, transparent 1.2px);
+    background-size: 18px 18px;
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(var(--grid-color, rgb(109 54 214 / 0.08)) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color, rgb(109 54 214 / 0.08)) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  .bg-stripes {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--stripe-color, rgb(109 54 214 / 0.1)) 0 2px,
+      transparent 2px 12px
+    );
+  }
+  .text-outline {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--outline-color, var(--color-plum-300));
+  }
+  /* Tepi bergerigi seperti sobekan tiket */
+  .edge-perforated {
+    --hole: 9px;
+    mask: radial-gradient(circle var(--hole) at var(--hole) 0, transparent 98%, #000) 0 0 / calc(var(--hole) * 3) 100% repeat-x;
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: var(--animate-marquee);
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+  }
+
   *,
   *::before,
   *::after {

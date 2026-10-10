@@ -6,13 +6,17 @@ import { safeUrl } from "@/lib/url";
 /** Bagian isi profil (fanbase / esport): ringkasan, isi Markdown, rincian, dan tautan. */
 export function ProfileBody({ profile }: { profile: Profile }) {
   const links = profile.links.map((l) => ({ ...l, url: safeUrl(l.url) })).filter((l) => l.url);
+  const hasAside = profile.details.length > 0 || links.length > 0;
   return (
-    <div className="grid gap-12 lg:grid-cols-[1fr_20rem]">
+    <div className={hasAside ? "grid gap-12 lg:grid-cols-[1fr_20rem]" : ""}>
       <div>
         {profile.body ? (
           <div className="prose-ff" dangerouslySetInnerHTML={{ __html: renderMarkdown(profile.body) }} />
         ) : (
-          <p className="text-ink-soft">Konten halaman ini sedang disiapkan oleh tim.</p>
+          <div className="bg-stripes flex min-h-56 flex-col justify-end rounded-[1.5rem] bg-mist p-8 ring-1 ring-line">
+            <p className="font-display text-2xl font-bold">Cerita lengkapnya sedang ditulis.</p>
+            <p className="mt-2 max-w-md text-ink-soft">Tim sedang menyiapkan isi halaman ini. Sementara itu, jelajahi bagian lain di bawah.</p>
+          </div>
         )}
       </div>
       {(profile.details.length > 0 || links.length > 0) && (

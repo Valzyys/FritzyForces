@@ -3,7 +3,7 @@ import { MessageCircleHeart } from "lucide-react";
 import { listApprovedMessages } from "@/lib/data";
 import { safeQuery } from "@/lib/db";
 import { FanNote } from "@/components/fan-note";
-import { EmptyState, ErrorNotice, PageHeader, Pagination, pageParam } from "@/components/ui";
+import { EmptyState, ErrorNotice, PageHeader, Pagination, StatStrip, pageParam } from "@/components/ui";
 import { FanwallForm } from "./fanwall-form";
 import { getSettings } from "@/lib/settings";
 
@@ -24,9 +24,14 @@ export default async function FanwallPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageHeader kicker="Fanwall" title="Pesan untuk Fritzy" description="Ucapan, dukungan, dan cerita kecil dari ZyFriends." />
-      <div className="shell grid gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <section aria-label="Pesan-pesan" className="order-2 lg:order-1">
+      <PageHeader
+        kicker="Fanwall"
+        title="Pesan untuk Fritzy"
+        description="Ucapan, dukungan, dan cerita kecil dari ZyFriends."
+        aside={<StatStrip items={[{ value: list.data.total, label: "Pesan tertempel" }, { value: settings.fanwallModeration ? "Aktif" : "Bebas", label: "Moderasi" }]} />}
+      />
+      <div className="shell grid grid-cols-1 gap-12 py-12 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <section aria-label="Pesan-pesan" className="bg-dots order-2 rounded-[1.5rem] bg-plum-50/60 p-4 sm:p-5 lg:order-1">
           {list.failed ? (
             <ErrorNotice />
           ) : list.data.items.length === 0 ? (

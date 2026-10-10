@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { ArrowUpRight, Trophy } from "lucide-react";
-import { listTimeline } from "@/lib/data";
+import { getShowTotals, listTimeline, recentActivities } from "@/lib/data";
 import { safeQuery } from "@/lib/db";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatDate } from "@/lib/time";
 import { mediaUrl, safeUrl } from "@/lib/url";
-import { EmptyState, ErrorNotice, PageHeader } from "@/components/ui";
+import { ErrorNotice, PageHeader, StatStrip } from "@/components/ui";
+import { ActivityItem } from "@/components/content";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Timeline",
@@ -14,7 +16,11 @@ export const metadata: Metadata = {
 };
 
 export default async function TimelinePage() {
-  const items = await safeQuery(() => listTimeline(), []);
+  const [items, totals, recent] = await Promise.all([
+    safeQuery(() => listTimeline(), []),
+    safeQuery(() => getShowTotals(), { shows: 0, setlists: 0, first: null, last: null }),
+    safeQuery(() => recentActivities(6), []),
+  ]);
   const byYear = new Map<string, typeof items.data>();
   for (const it of items.data) {
     const y = it.date.slice(0, 4);
@@ -23,14 +29,29 @@ export default async function TimelinePage() {
 
   return (
     <>
-      <PageHeader kicker="Timeline" title="Perjalanan Fritzy" description="Momen-momen yang menandai langkah Fritzy — dipilih dan dirangkum oleh tim Fritzy Force." />
+      <PageHeader kicker="Timeline" title="Perjalanan Fritzy" description="Momen-momen yang menandai langkah Fritzy — dipilih dan dirangkum oleh tim Fritzy Force."
+        aside={<StatStrip items={[{ value: items.data.length, label: "Momen" }, { value: new Set(items.data.map((i) => i.date.slice(0, 4))).size, label: "Tahun" }, { value: totals.data.shows, label: "Show teater" }]} />}
+      />
       <div className="shell py-14">
         {items.failed ? (
           <ErrorNotice />
         ) : items.data.length === 0 ? (
-          <EmptyState title="Timeline sedang dikurasi" icon={<Trophy className="size-5" aria-hidden />}>
-            Pencapaian akan ditambahkan oleh admin.
-          </EmptyState>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            <div className="bg-stripes relative overflow-hidden rounded-[1.5rem] bg-plum-950 p-8 text-white">
+              <Trophy className="size-10 text-plum-300" aria-hidden />
+              <p className="mt-6 font-display text-3xl font-bold leading-tight">Timeline pencapaian sedang dikurasi.</p>
+              <p className="mt-3 text-plum-100">Tim Fritzy Force sedang memilih momen-momen terpenting. Sementara itu, ikuti jejak kegiatan terbaru Fritzy.</p>
+              <Link href="/kegiatan" className="mt-6 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-plum-900 hover:bg-plum-100">Buka rekap kegiatan</Link>
+            </div>
+            <div className="rounded-[1.5rem] border border-line bg-white p-6">
+              <p className="kicker">Jejak terbaru</p>
+              <ul className="mt-2 divide-y divide-line">
+                {recent.data.map((a) => (
+                  <ActivityItem key={a.id} item={a} showYear />
+                ))}
+              </ul>
+            </div>
+          </div>
         ) : (
           <div className="space-y-16">
             {[...byYear.entries()].map(([year, list]) => (

@@ -11,6 +11,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  agentRules: false,
   images: { unoptimized: true },
   experimental: {
     serverActions: { bodySizeLimit: "10mb" },

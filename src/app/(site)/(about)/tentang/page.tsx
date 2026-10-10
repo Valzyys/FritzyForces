@@ -4,7 +4,8 @@ import { getProfile, listCommunities, type Community } from "@/lib/data";
 import { safeQuery } from "@/lib/db";
 import { mediaUrl, safeUrl } from "@/lib/url";
 import { ProfileBody } from "@/components/profile-sections";
-import { ErrorNotice, PageHeader } from "@/components/ui";
+import { ErrorNotice, PageHeader, StatStrip } from "@/components/ui";
+import { ExploreGrid } from "@/components/explore-grid";
 
 export const metadata: Metadata = {
   title: "Tentang Kami",
@@ -24,7 +25,12 @@ export default async function AboutPage() {
 
   return (
     <>
-      <PageHeader kicker="Tentang Kami" title={p?.tagline || p?.name || "Fritzy Force"} description={p?.summary || undefined}>
+      <PageHeader
+        kicker="Tentang Kami"
+        title={p?.tagline || p?.name || "Fritzy Force"}
+        description={p?.summary || "Fanbase untuk Fritzy JKT48 — rumah bagi ZyFriends."}
+        aside={<StatStrip items={[{ value: groups.length, label: "Komunitas" }, { value: alliances.length, label: "Aliansi" }]} />}
+      >
         {logo && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logo} alt={`Logo ${p?.name ?? "Fritzy Force"}`} className="size-20 rounded-2xl object-cover ring-1 ring-line" />
@@ -84,6 +90,8 @@ export default async function AboutPage() {
             </ul>
           </section>
         )}
+
+        <ExploreGrid keys={["esport", "galeri", "fanwall", "jadwal"]} />
       </div>
     </>
   );

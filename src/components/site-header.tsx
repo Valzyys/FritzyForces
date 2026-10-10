@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { MAIN_NAV } from "./site-nav";
 import { Wordmark } from "./logo";
 import { cx } from "./ui";
+import { MotionToggle } from "./motion-toggle";
 
 function isActive(pathname: string, match: readonly string[]) {
   return match.some((m) => pathname === m || pathname.startsWith(`${m}/`));
@@ -50,7 +51,7 @@ export function SiteHeader({ siteName, announcement }: { siteName: string; annou
         <Link href={announcement.href} className="shell flex h-9 items-center justify-center gap-2 text-[0.8rem] sm:justify-between">
           <span className="flex min-w-0 items-center gap-2">
             <span className="relative flex size-2 shrink-0">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-plum-400 opacity-60 motion-reduce:hidden" />
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-plum-400 opacity-60 reduced:hidden" />
               <span className="relative inline-flex size-2 rounded-full bg-plum-300" />
             </span>
             <span className="shrink-0 font-bold uppercase tracking-[0.12em] text-plum-300">{announcement.label}</span>
@@ -161,6 +162,7 @@ export function SiteHeader({ siteName, announcement }: { siteName: string; annou
               );
             })}
           </ul>
+          <MotionToggle tone="light" className="mt-6" />
         </nav>
         {announcement && (
           <Link href={announcement.href} onClick={() => setOpen(false)} className="m-4 mt-0 rounded-2xl bg-plum-950 p-4 text-white">

@@ -48,7 +48,7 @@ export default async function FritzyPage() {
     <>
       <section className="relative overflow-hidden bg-mist">
         <div aria-hidden className="bg-grid pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
-        <div className="shell relative grid gap-6 py-8 sm:py-12 md:grid-cols-[minmax(0,20rem)_1fr] lg:gap-10">
+        <div className="shell relative grid grid-cols-1 gap-6 py-8 sm:py-12 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-10">
           <div className="relative mx-auto w-full max-w-[20rem] animate-rise">
             <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] bg-plum-600 ring-1 ring-plum-700">
               {photo ? (
@@ -66,16 +66,16 @@ export default async function FritzyPage() {
             <BadgeRing id="ring-profil" text="JKT48 ✦ Generasi 12 ✦ Fritzy ✦ " center="12" className="absolute -top-4 -right-4 size-24" />
           </div>
 
-          <div className="flex animate-rise flex-col [animation-delay:80ms]">
+          <div className="flex min-w-0 animate-rise flex-col [animation-delay:80ms]">
             <p className="kicker">Profil</p>
-            <h1 className="mt-3 text-5xl leading-[0.92] font-extrabold tracking-[-0.045em] text-ink sm:text-7xl">{p?.name || "Fritzy"}</h1>
+            <h1 className="mt-3 text-[clamp(2.4rem,11vw,4.5rem)] leading-[0.95] font-extrabold tracking-[-0.045em] break-words text-ink">{p?.name || "Fritzy"}</h1>
             {p?.tagline && <p className="mt-3 text-lg font-semibold text-plum-700">{p.tagline}</p>}
             {p?.jiko && (
               <blockquote className="mt-5 max-w-2xl border-l-[3px] border-plum-400 pl-5 font-display text-xl leading-snug text-ink sm:text-2xl">“{p.jiko}”</blockquote>
             )}
             {p?.summary && <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">{p.summary}</p>}
             {!p?.jiko && !p?.summary && recent.data[0] && (
-              <Link href="/kegiatan" className="group mt-6 flex max-w-xl items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-line hover:ring-plum-300">
+              <Link href="/kegiatan" className="group mt-6 flex w-full max-w-xl min-w-0 items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-line hover:ring-plum-300">
                 <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-plum-600 font-display text-lg font-bold text-white">
                   {recent.data[0].date.slice(8, 10)}
                 </span>
@@ -96,11 +96,11 @@ export default async function FritzyPage() {
                 ))}
               </ul>
             )}
-            <dl className="mt-auto grid grid-cols-2 gap-3 pt-8 xl:grid-cols-4">
+            <dl className="mt-auto grid grid-cols-2 gap-2 pt-8 sm:gap-3 xl:grid-cols-4">
               {stats.map((s, i) => (
                 <div key={s.label} className={i === 0 ? "rounded-2xl bg-plum-950 p-4 text-white" : "rounded-2xl bg-white p-4 ring-1 ring-line"}>
                   <dt className={i === 0 ? "text-xs font-semibold text-plum-200" : "text-xs font-semibold text-ink-faint"}>{s.label}</dt>
-                  <dd className="mt-1 font-display text-2xl font-bold tabular-nums">{s.value}</dd>
+                  <dd className="mt-1 font-display text-lg leading-tight font-bold break-words tabular-nums sm:text-2xl">{s.value}</dd>
                 </div>
               ))}
             </dl>

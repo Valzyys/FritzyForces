@@ -5,8 +5,11 @@ import { useEffect, useRef } from "react";
 const SESSION_KEY = "ff-intro-seen";
 const SETLIST_LABELS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08"];
 
-/** Skrip inline: dijalankan sebelum render pertama agar intro tidak berkedip di kunjungan berikutnya. */
-export const INTRO_BOOT_SCRIPT = `try{if(sessionStorage.getItem("${SESSION_KEY}")||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.dataset.intro="seen"}catch(e){}`;
+/**
+ * Skrip inline (dijalankan sebelum render pertama): pasang preferensi animasi pengunjung
+ * (`ff-motion` di localStorage) dan tandai intro sudah tampil di sesi ini agar tidak berkedip.
+ */
+export const INTRO_BOOT_SCRIPT = `try{var d=document.documentElement;if(localStorage.getItem("ff-motion")==="reduced")d.dataset.motion="reduced";if(sessionStorage.getItem("${SESSION_KEY}")||d.dataset.motion==="reduced")d.dataset.intro="seen"}catch(e){}`;
 
 function finish() {
   document.documentElement.dataset.intro = "seen";
@@ -15,8 +18,8 @@ function finish() {
 /**
  * Intro "tirai panggung" (GSAP): segel logo di tirai → tirai beludru tersibak →
  * lampu sorot menyapu, debu emas melayang, logo & judul muncul, bar setlist M01–M08 →
- * panggung terangkat menampilkan situs. Sekali per sesi, bisa dilewati, dan dimatikan
- * untuk prefers-reduced-motion. Bila GSAP gagal dimuat, CSS menutup intro otomatis.
+ * panggung terangkat menampilkan situs. Sekali per sesi, bisa dilewati, dan tidak tampil
+ * bila pengunjung memilih "Kurangi animasi". Bila GSAP gagal dimuat, CSS menutup intro otomatis.
  */
 export function Intro({ name, setlists }: { name: string; setlists: string[] }) {
   const root = useRef<HTMLDivElement>(null);

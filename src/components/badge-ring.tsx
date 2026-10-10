@@ -4,7 +4,7 @@ import { cx } from "./ui";
 export function BadgeRing({ id, text, className, center = "✦" }: { id: string; text: string; className?: string; center?: string }) {
   return (
     <div className={cx("relative grid size-28 place-items-center rounded-full bg-white text-plum-800 shadow-[var(--shadow-lift)] ring-1 ring-line", className)} aria-hidden>
-      <svg viewBox="0 0 100 100" className="absolute inset-0 size-full animate-spin-slow motion-reduce:animate-none">
+      <svg viewBox="0 0 100 100" className="absolute inset-0 size-full animate-spin-slow reduced:animate-none">
         <defs>
           <path id={id} d="M50,50 m-37,0 a37,37 0 1,1 74,0 a37,37 0 1,1 -74,0" />
         </defs>

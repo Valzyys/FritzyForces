@@ -3,6 +3,7 @@ import { ArrowUp, ArrowUpRight, MessageCircleHeart, Ticket } from "lucide-react"
 import { MAIN_NAV } from "./site-nav";
 import { LogoMark } from "./logo";
 import { Marquee } from "./marquee";
+import { MotionToggle } from "./motion-toggle";
 import type { LinkItem } from "@/lib/json";
 import type { EventRow } from "@/lib/data";
 import { formatDate, formatTime, formatWeekday } from "@/lib/time";
@@ -136,9 +137,12 @@ export function SiteFooter({ siteName, tagline, socials, nextShow, setlists }: P
             <p>
               © {new Date().getFullYear()} {siteName} · Dibuat oleh dan untuk ZyFriends
             </p>
-            <a href="#top" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold text-plum-100 ring-1 ring-white/15 hover:bg-white/10">
-              Kembali ke atas <ArrowUp className="size-3.5" aria-hidden />
-            </a>
+            <div className="flex flex-wrap items-center gap-2">
+              <MotionToggle />
+              <a href="#top" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold text-plum-100 ring-1 ring-white/15 hover:bg-white/10">
+                Kembali ke atas <ArrowUp className="size-3.5" aria-hidden />
+              </a>
+            </div>
           </div>
         </div>
       </div>

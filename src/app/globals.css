@@ -2,6 +2,8 @@
 @import "@fontsource-variable/plus-jakarta-sans";
 @import "@fontsource-variable/bricolage-grotesque";
 
+@custom-variant reduced (&:where([data-motion="reduced"], [data-motion="reduced"] *));
+
 /*
  * Design token FritzyForce — ungu & putih sebagai identitas utama.
  * Skala "plum" dipakai untuk aksen; netral ("ink", "mist") memiliki sedikit rona ungu
@@ -84,6 +86,12 @@
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
+    /* Kata sangat panjang (judul rekap, URL) dipatahkan agar tidak meluber di layar kecil. */
+    overflow-wrap: break-word;
+  }
+  /* Anak grid boleh menyusut: teks panjang dari CMS/rekap tidak boleh melebarkan kolom keluar layar. */
+  .grid > * {
+    min-width: 0;
   }
   ::selection {
     background: var(--color-plum-200);
@@ -320,19 +328,21 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none !important;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+/*
+ * Mode "Kurangi animasi" dipilih pengunjung lewat tombol di footer/menu (html[data-motion="reduced"]).
+ * Sengaja tidak memakai @media (prefers-reduced-motion) secara otomatis: banyak PC Windows
+ * mematikan "Animation effects" secara default sehingga seluruh animasi situs ikut mati.
+ */
+html[data-motion="reduced"] .marquee-track {
+  animation: none !important;
+}
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 /* ───────────── Intro "tirai panggung" (dianimasikan GSAP, lihat components/intro.tsx) ───────────── */
@@ -635,8 +645,6 @@ html[data-intro="seen"] .intro {
 .intro-skip-btn:hover {
   background: rgb(255 255 255 / 0.16);
 }
-@media (prefers-reduced-motion: reduce) {
-  .intro {
-    display: none;
-  }
+html[data-motion="reduced"] .intro {
+  display: none;
 }

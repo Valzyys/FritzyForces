@@ -107,42 +107,69 @@ export function SiteHeader({ siteName, announcement }: { siteName: string; annou
         </button>
       </div>
 
-      {open && (
-        <div
-          id="menu-seluler"
-          ref={panelRef}
-          className="bg-dots fixed inset-x-0 bottom-0 top-16 z-40 animate-fade overflow-y-auto bg-white lg:hidden"
-        >
-          <nav aria-label="Navigasi seluler" className="shell py-6">
-            <p className="mb-2 flex justify-between border-b border-dashed border-line-strong pb-3 font-display text-sm font-bold text-ink-faint">
-              <span>Setlist situs</span>
-              <span>{MAIN_NAV.length} lagu</span>
-            </p>
-            <ul className="divide-y divide-line">
-              {MAIN_NAV.map((item, i) => {
-                const active = isActive(pathname, item.match);
-                return (
-                  <li key={item.href} className="animate-rise" style={{ animationDelay: `${i * 30}ms` }}>
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={cx(
-                        "flex items-center gap-4 py-3.5 font-display text-2xl font-semibold",
-                        active ? "text-plum-700" : "text-ink",
-                      )}
-                    >
-                      <span className="w-9 text-sm font-bold text-plum-400 tabular-nums">M{String(i + 1).padStart(2, "0")}</span>
-                      <span className="flex-1">{item.label}</span>
-                      {active && <span className="size-2 rounded-full bg-plum-600" aria-hidden />}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </div>
-      )}
     </header>
+    {/*
+      Panel menu seluler sengaja di luar <header>: header memakai backdrop-filter, yang
+      membuat elemen position:fixed di dalamnya terkurung setinggi header (menu tak terlihat).
+    */}
+    {open && (
+      <div
+        id="menu-seluler"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu navigasi"
+        className="bg-dots fixed inset-0 z-[60] flex animate-fade flex-col overflow-y-auto bg-white lg:hidden"
+      >
+        <div className="shell flex h-16 shrink-0 items-center justify-between gap-6 border-b border-line">
+          <Link href="/" onClick={() => setOpen(false)} className="shrink-0 rounded-xl" aria-label={`${siteName} — beranda`}>
+            <Wordmark name={siteName} />
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              buttonRef.current?.focus();
+            }}
+            className="inline-flex size-11 items-center justify-center rounded-full bg-plum-950 text-white"
+          >
+            <span className="sr-only">Tutup menu</span>
+            <X className="size-5" aria-hidden />
+          </button>
+        </div>
+        <nav aria-label="Navigasi seluler" className="shell flex-1 py-6">
+          <p className="mb-2 flex justify-between border-b border-dashed border-line-strong pb-3 font-display text-sm font-bold text-ink-faint">
+            <span>Setlist situs</span>
+            <span>{MAIN_NAV.length + 1} lagu</span>
+          </p>
+          <ul className="divide-y divide-line">
+            {[{ href: "/", label: "Beranda", match: ["/__beranda"] as readonly string[] }, ...MAIN_NAV].map((item, i) => {
+              const active = item.href === "/" ? pathname === "/" : isActive(pathname, item.match);
+              return (
+                <li key={item.href} className="animate-rise" style={{ animationDelay: `${i * 30}ms` }}>
+                  <Link
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    aria-current={active ? "page" : undefined}
+                    className={cx("flex items-center gap-4 py-3.5 font-display text-2xl font-semibold", active ? "text-plum-700" : "text-ink")}
+                  >
+                    <span className="w-9 text-sm font-bold text-plum-400 tabular-nums">M{String(i + 1).padStart(2, "0")}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {active && <span className="size-2 rounded-full bg-plum-600" aria-hidden />}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        {announcement && (
+          <Link href={announcement.href} onClick={() => setOpen(false)} className="m-4 mt-0 rounded-2xl bg-plum-950 p-4 text-white">
+            <span className="block text-xs font-bold uppercase tracking-[0.14em] text-plum-300">{announcement.label}</span>
+            <span className="mt-1 block font-semibold">{announcement.text}</span>
+          </Link>
+        )}
+      </div>
+    )}
     </>
   );
 }

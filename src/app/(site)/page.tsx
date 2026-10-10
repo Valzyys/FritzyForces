@@ -75,7 +75,7 @@ export default async function HomePage() {
         <div aria-hidden className="bg-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]" />
         <div className="shell relative grid gap-3 py-5 sm:gap-4 sm:py-8 lg:grid-cols-12">
           {/* Nama + jiko */}
-          <div className="relative flex flex-col overflow-hidden rounded-[2rem] bg-white p-6 ring-1 ring-line sm:p-9 lg:col-span-7 lg:row-span-2">
+          <div className="relative flex flex-col overflow-hidden rounded-[2rem] bg-white p-6 ring-1 ring-line sm:p-9 lg:col-span-7">
             <div className="flex items-center justify-between gap-3">
               <p className="kicker animate-fade">{settings.tagline}</p>
               <span className="hidden rounded-full bg-plum-50 px-3 py-1 text-xs font-bold text-plum-800 ring-1 ring-plum-100 sm:inline">
@@ -124,7 +124,7 @@ export default async function HomePage() {
           </div>
 
           {/* Foto / monogram */}
-          <div className="relative min-h-80 overflow-hidden rounded-[2rem] bg-plum-600 ring-1 ring-plum-700 lg:col-span-5">
+          <div className="relative min-h-[28rem] overflow-hidden rounded-[2rem] bg-plum-600 ring-1 ring-plum-700 sm:min-h-[34rem] lg:col-span-5 lg:min-h-0">
             {photo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={photo} alt={`Foto ${p?.name ?? "Fritzy"}`} className="absolute inset-0 size-full object-cover object-[50%_22%]" fetchPriority="high" />
@@ -147,7 +147,7 @@ export default async function HomePage() {
           </div>
 
           {/* Angka-angka */}
-          <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:col-span-5">
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 lg:col-span-12">
             {[
               { value: totals.data.shows, label: "Show teater tercatat", href: "/kegiatan?jenis=Theater+Show", tone: "dark" },
               { value: totals.data.setlists, label: "Setlist dibawakan", href: "/diskografi?tipe=setlist", tone: "light" },
@@ -158,7 +158,7 @@ export default async function HomePage() {
                 key={s.label}
                 href={s.href}
                 className={cx(
-                  "group relative flex min-h-32 flex-col justify-between overflow-hidden rounded-[1.5rem] p-5 ring-1 transition-transform hover:-translate-y-0.5",
+                  "group relative flex min-h-28 flex-col justify-between overflow-hidden rounded-[1.5rem] p-5 ring-1 transition-transform hover:-translate-y-0.5",
                   s.tone === "dark" && "bg-plum-950 text-white ring-plum-900",
                   s.tone === "light" && "bg-white text-ink ring-line",
                   s.tone === "plum" && "bg-plum-100 text-plum-950 ring-plum-200",

@@ -85,7 +85,7 @@ Lalu tambahkan secret di Settings → Variables and Secrets (tipe *Secret*):
 | --- | --- |
 | `ADMIN_SETUP_TOKEN` | token bebas (panjang/isi apa saja) untuk membuat admin pertama di `/admin/setup`; boleh dihapus setelah admin dibuat |
 | `CRON_SECRET` | string acak panjang, untuk endpoint sinkronisasi cron |
-| `JKT48_API_KEY` | (opsional) API key JKT48Connect untuk sinkron jadwal teater & status live |
+| `JKT48_API_KEY` | (opsional) API key JKT48Connect (`jk48c_…`) untuk sinkron jadwal teater dari `/api/v1/theater` |
 
 Setelah deploy: buka `/admin/setup`, buat admin, lalu unggah foto Fritzy di Admin → Profil.
 
@@ -105,7 +105,7 @@ Domain `fritzyforce.my.id` dihubungkan di Workers → Settings → Domains & Rou
 
 `worker.ts` membungkus worker OpenNext dan menambahkan handler `scheduled` (cron `17 */3 * * *`) yang memanggil `POST /api/cron/sync` dengan `Authorization: Bearer CRON_SECRET`:
 
-- **Teater** — `getTheater()` JKT48Connect, halaman 1–3; show yang lineup-nya memuat `FRITZY_MEMBER_KEY` di-upsert ke `events` (`external_id = jkt48:<reference_code>`).
+- **Teater** — `GET https://jkt48connect.com/api/v1/theater?page=N` dengan header `x-api-key: JKT48_API_KEY` (tier Free, cache 5 menit). Halaman dibaca berurutan sampai kosong (maks. 5). Show yang `lineup[].url_key`/`name`-nya cocok dengan `FRITZY_MEMBER_KEY` di-upsert ke `events` (`external_id = jkt48:<reference_code>`); `date` + `start_time`/`end_time` dibaca sebagai WIB. Base URL bisa diubah lewat var `JKT48_API_BASE`.
 - **Rekap kegiatan** — tiap tab yang dikonfigurasi (default `2023, 2024, 2025, 2026, Show Recap`, bisa diubah di *Admin → Rekap kegiatan*) diunduh sebagai CSV dari Google Sheets dan menggantikan isi tab tersebut di D1. **Syarat:** sheet *Fritzy Rosmerian − Recap* harus dibagikan "Siapa saja yang memiliki link — Viewer". Bila tidak, gunakan *Impor manual dari CSV* di dashboard.
 
 Kedua sinkronisasi juga bisa dijalankan manual dari dashboard; hasilnya dicatat di tabel `sync_runs`.

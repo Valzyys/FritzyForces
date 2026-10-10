@@ -46,7 +46,7 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
     <>
       <AdminPageHeader
         title="Jadwal"
-        description="Teater dengan Fritzy disinkronkan otomatis dari JKT48Connect. Video call, off-air, dan event lain bisa ditambahkan manual."
+        description="Teater yang lineup-nya memuat Fritzy disinkronkan otomatis dari JKT48Connect (/api/v1/theater). Video call, off-air, dan event lain bisa ditambahkan manual."
         action={
           <div className="flex gap-2">
             <QuickAction action={runTheaterSync}>Sinkron teater</QuickAction>

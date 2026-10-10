@@ -25,6 +25,7 @@
   "vars": {
     "SITE_URL": "https://fritzyforce.my.id",
     "FRITZY_MEMBER_KEY": "fritzy",
+    "JKT48_API_BASE": "https://jkt48connect.com",
     "RECAP_SHEET_ID": "13B6xHPxQP2tzHb0pE1F_UVoDbDbfR6BZa8IS2ujF2L8"
   }
 }

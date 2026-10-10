@@ -1,12 +1,9 @@
 import Link from "next/link";
-import { ArrowUpRight, Radio } from "lucide-react";
+import { Radio } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { all, first, safeQuery } from "@/lib/db";
-import { getEnv } from "@/lib/cf";
 import { getNextTheaterShow } from "@/lib/data";
-import { describeApiError, getJkt48Client } from "@/lib/sync/run";
 import { formatDate, formatTime } from "@/lib/time";
-import { safeUrl } from "@/lib/url";
 import { QuickAction } from "@/components/admin/confirm";
 import { AdminPageHeader, Panel } from "@/components/admin/ui";
 import { Badge } from "@/components/ui";
@@ -14,25 +11,10 @@ import { runRecapSync, runTheaterSync } from "./sync-actions";
 
 type SyncRun = { kind: string; ok: number; message: string; created_at: string };
 
-async function fritzyLive() {
-  const client = await getJkt48Client();
-  if (!client) return { error: "JKT48_API_KEY belum diset.", items: [] };
-  try {
-    const key = (await getEnv()).FRITZY_MEMBER_KEY || "fritzy";
-    const live = await client.getLive();
-    return {
-      error: null,
-      items: live.filter((m) => m.url_key?.toLowerCase().includes(key) || m.name?.toLowerCase().includes(key)),
-    };
-  } catch (err) {
-    return { error: describeApiError(err), items: [] };
-  }
-}
-
 export default async function AdminHome() {
   const admin = await requireAdmin();
   const now = new Date().toISOString();
-  const [counts, runs, nextShow, live, recentLive] = await Promise.all([
+  const [counts, runs, nextShow, recentLive] = await Promise.all([
     safeQuery(
       () =>
         first<{ events: number; posts: number; drafts: number; photos: number; pending: number; activities: number }>(
@@ -55,11 +37,10 @@ export default async function AdminHome() {
       [],
     ),
     safeQuery(() => getNextTheaterShow(), null),
-    fritzyLive(),
     safeQuery(
       () =>
         all<{ id: number; date: string; type: string; title: string }>(
-          "SELECT id, date, type, title FROM activities WHERE type LIKE '%Live%' ORDER BY date DESC LIMIT 5",
+          "SELECT id, date, type, title FROM activities WHERE type LIKE '%Live%' ORDER BY date DESC LIMIT 8",
         ),
       [],
     ),
@@ -124,46 +105,23 @@ export default async function AdminHome() {
           </ul>
         </Panel>
 
-        <Panel title="Live Fritzy" description="Hanya terlihat oleh admin — tidak ditampilkan di jadwal publik.">
-          {live.error ? (
-            <p className="text-sm text-ink-soft">{live.error}</p>
-          ) : live.items.length === 0 ? (
+        <Panel title="Live Fritzy (rekap)" description="Hanya terlihat oleh admin — live tidak ditampilkan di jadwal publik.">
+          {recentLive.data.length === 0 ? (
             <p className="flex items-center gap-2 text-sm text-ink-soft">
-              <Radio className="size-4 text-ink-faint" aria-hidden /> Fritzy sedang tidak live.
+              <Radio className="size-4 text-ink-faint" aria-hidden /> Belum ada catatan live di rekap kegiatan.
             </p>
           ) : (
-            <ul className="space-y-3">
-              {live.items.map((m) => {
-                const url = safeUrl(m.stream_url);
-                return (
-                  <li key={`${m.platform}-${m.room_id ?? m.slug}`} className="flex items-center justify-between gap-3 rounded-xl bg-plum-50 p-3">
-                    <span>
-                      <Badge tone="solid">LIVE</Badge> <span className="font-semibold">{m.platform}</span>
-                      {m.title && <span className="block text-sm text-ink-soft">{m.title}</span>}
-                    </span>
-                    {m.viewers != null && <span className="text-sm text-ink-soft tabular-nums">{m.viewers} penonton</span>}
-                    {url && (
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-plum-700" aria-label="Buka siaran">
-                        <ArrowUpRight className="size-4" aria-hidden />
-                      </a>
-                    )}
-                  </li>
-                );
-              })}
+            <ul className="divide-y divide-line text-sm">
+              {recentLive.data.map((a) => (
+                <li key={a.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+                  <span className="flex items-center gap-2">
+                    <Badge tone="solid">{a.type}</Badge>
+                    <span className="font-medium text-ink">{a.title}</span>
+                  </span>
+                  <span className="shrink-0 text-ink-faint">{formatDate(a.date)}</span>
+                </li>
+              ))}
             </ul>
-          )}
-          {recentLive.data.length > 0 && (
-            <>
-              <p className="mt-5 text-xs font-bold uppercase tracking-[0.1em] text-ink-faint">Live terakhir (rekap)</p>
-              <ul className="mt-2 space-y-1.5 text-sm">
-                {recentLive.data.map((a) => (
-                  <li key={a.id} className="flex justify-between gap-3">
-                    <span className="text-ink">{a.title}</span>
-                    <span className="shrink-0 text-ink-faint">{formatDate(a.date)}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
           )}
         </Panel>
 

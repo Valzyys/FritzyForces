@@ -116,3 +116,56 @@ describe("skema D1", () => {
     expect(MIGRATIONS[0].statements.every((s) => !s.includes("--"))).toBe(true);
   });
 });
+
+describe("JKT48Connect /api/v1/theater", async () => {
+  const { fetchTheaterPage, lineupHas } = await import("@/lib/jkt48");
+  const sample = {
+    ok: true,
+    data: [
+      {
+        date: "2026-10-10",
+        link: "SHA101",
+        type: "SHOW",
+        title: "Pajama Drive",
+        banner: "https://jkt48connect.com/api/img/i/x.jpg",
+        lineup: [
+          { id: "6", name: "Fera", url_key: "fera" },
+          { id: "999", name: "Fritzy", url_key: "fritzy" },
+        ],
+        poster: "https://jkt48connect.com/api/img/i/y.jpg",
+        status: true,
+        end_time: "21:00",
+        start_time: "19:00",
+        schedule_id: 7344,
+        reference_code: "SHA101",
+        is_birthday_show: false,
+        jkt48_member_type: "TRAINEE",
+        short_description: null,
+      },
+      { title: "baris rusak tanpa reference_code", date: "2026-10-11" },
+    ],
+    cached_at: "2026-10-10T16:15:47.431Z",
+    cache_ttl: 60,
+    stale: false,
+    tier: "Free",
+  };
+  const fakeFetch = (status: number, body: unknown) =>
+    (async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe("https://jkt48connect.com/api/v1/theater?page=2");
+      expect((init?.headers as Record<string, string>)["x-api-key"]).toBe("k");
+      return new Response(JSON.stringify(body), { status });
+    }) as typeof fetch;
+
+  it("membaca data, melewati baris tidak valid, dan mengirim x-api-key + page", async () => {
+    const res = await fetchTheaterPage({ apiKey: "k", page: 2, fetchImpl: fakeFetch(200, sample) });
+    expect(res.skipped).toBe(1);
+    expect(res.shows).toHaveLength(1);
+    expect(res.shows[0]).toMatchObject({ reference_code: "SHA101", title: "Pajama Drive", start_time: "19:00" });
+    expect(lineupHas(res.shows[0], "fritzy")).toBe(true);
+    expect(lineupHas(res.shows[0], "freya")).toBe(false);
+  });
+  it("menerjemahkan error HTTP & ok:false", async () => {
+    await expect(fetchTheaterPage({ apiKey: "k", page: 2, fetchImpl: fakeFetch(401, {}) })).rejects.toThrow(/API key/);
+    await expect(fetchTheaterPage({ apiKey: "k", page: 2, fetchImpl: fakeFetch(200, { ok: false, message: "Kuota habis" }) })).rejects.toThrow("Kuota habis");
+  });
+});

@@ -1,8 +1,8 @@
 import "server-only";
-import { JKT48Connect, JKT48Error, type TheaterShow } from "@jkt48connect-id/api";
 import { batch, first, run } from "../db";
 import { getEnv } from "../cf";
 import { combineWib } from "../time";
+import { fetchTheaterPage, lineupHas, type TheaterShow } from "../jkt48";
 import {
   DEFAULT_RECAP_TABS,
   isShowRecapTab,
@@ -50,7 +50,13 @@ export async function importRecapCsv(tabName: string, csv: string): Promise<numb
 
 async function fetchTabCsv(sheetId: string, tab: RecapTab): Promise<string> {
   const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/export?format=csv&gid=${tab.gid}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000), redirect: "follow" });
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(15_000), redirect: "follow" });
+  } catch (err) {
+    console.error(`[recap] gagal mengunduh tab ${tab.name}:`, err instanceof Error ? err.message : err);
+    throw new Error(`Tab "${tab.name}": Google Sheets tidak bisa dihubungi. Coba lagi nanti atau gunakan impor CSV manual.`);
+  }
   const type = res.headers.get("content-type") ?? "";
   if (!res.ok || type.includes("text/html")) {
     throw new Error(
@@ -85,38 +91,26 @@ export async function syncRecap(): Promise<SyncResult> {
   }
 }
 
-function hasFritzy(show: TheaterShow, key: string): boolean {
-  const k = key.toLowerCase();
-  return (show.lineup ?? []).some(
-    (m) => (m.url_key ?? "").toLowerCase().includes(k) || (m.name ?? "").toLowerCase().includes(k),
-  );
-}
-
-export async function getJkt48Client(): Promise<JKT48Connect | null> {
-  const env = await getEnv();
-  if (!env.JKT48_API_KEY) return null;
-  return new JKT48Connect({ apiKey: env.JKT48_API_KEY, timeoutMs: 12_000, retries: 1, cache: false });
-}
-
-export function describeApiError(err: unknown): string {
-  if (err instanceof JKT48Error) return `JKT48Connect: ${err.message} (${err.code})`;
-  return err instanceof Error ? err.message : "Gagal menghubungi JKT48Connect.";
-}
-
 export async function syncTheater(): Promise<SyncResult> {
   try {
     const env = await getEnv();
-    const client = await getJkt48Client();
-    if (!client) return logRun("theater", { ok: false, message: "JKT48_API_KEY belum diset; sinkronisasi teater dilewati." });
+    const apiKey = env.JKT48_API_KEY?.trim();
+    if (!apiKey) return logRun("theater", { ok: false, message: "JKT48_API_KEY belum diset; sinkronisasi teater dilewati." });
     const key = env.FRITZY_MEMBER_KEY || "fritzy";
 
+    // Paginasi sampai halaman kosong / tidak ada show baru (maks. 5 halaman per sinkronisasi).
     const shows: TheaterShow[] = [];
-    for (let page = 1; page <= 3; page++) {
-      const list = await client.getTheater({ page });
-      if (!Array.isArray(list) || list.length === 0) break;
-      shows.push(...list);
+    const seen = new Set<string>();
+    let skipped = 0;
+    for (let page = 1; page <= 5; page++) {
+      const res = await fetchTheaterPage({ apiKey, page, baseUrl: env.JKT48_API_BASE });
+      skipped += res.skipped;
+      const fresh = res.shows.filter((s) => !seen.has(s.reference_code));
+      if (fresh.length === 0) break;
+      fresh.forEach((s) => seen.add(s.reference_code));
+      shows.push(...fresh);
     }
-    const mine = shows.filter((s) => s.reference_code && hasFritzy(s, key));
+    const mine = shows.filter((s) => lineupHas(s, key));
     const now = new Date().toISOString();
     const statements = mine
       .map((s) => {
@@ -145,9 +139,9 @@ export async function syncTheater(): Promise<SyncResult> {
     await batch(statements);
     return logRun("theater", {
       ok: true,
-      message: `${shows.length} show dibaca, ${statements.length} show dengan Fritzy disimpan.`,
+      message: `${shows.length} show dibaca, ${statements.length} show dengan Fritzy disimpan${skipped ? ` (${skipped} baris tidak valid dilewati)` : ""}.`,
     });
   } catch (err) {
-    return logRun("theater", { ok: false, message: describeApiError(err) });
+    return logRun("theater", { ok: false, message: err instanceof Error ? err.message : "Sinkronisasi teater gagal." });
   }
 }

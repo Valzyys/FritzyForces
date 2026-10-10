@@ -102,8 +102,20 @@ export async function syncTheater(): Promise<SyncResult> {
     const shows: TheaterShow[] = [];
     const seen = new Set<string>();
     let skipped = 0;
+    let stoppedNote = "";
     for (let page = 1; page <= 5; page++) {
-      const res = await fetchTheaterPage({ apiKey, page, baseUrl: env.JKT48_API_BASE });
+      let res: Awaited<ReturnType<typeof fetchTheaterPage>>;
+      if (page === 1) {
+        res = await fetchTheaterPage({ apiKey, page, baseUrl: env.JKT48_API_BASE });
+      } else {
+        // Halaman lanjutan bersifat opsional: bila error/timeout, simpan hasil yang sudah didapat.
+        try {
+          res = await fetchTheaterPage({ apiKey, page, baseUrl: env.JKT48_API_BASE, timeoutMs: 10_000, attempts: 1 });
+        } catch (err) {
+          stoppedNote = ` Halaman ${page} dilewati: ${err instanceof Error ? err.message : "error"}`;
+          break;
+        }
+      }
       skipped += res.skipped;
       const fresh = res.shows.filter((s) => !seen.has(s.reference_code));
       if (fresh.length === 0) break;
@@ -139,7 +151,7 @@ export async function syncTheater(): Promise<SyncResult> {
     await batch(statements);
     return logRun("theater", {
       ok: true,
-      message: `${shows.length} show dibaca, ${statements.length} show dengan Fritzy disimpan${skipped ? ` (${skipped} baris tidak valid dilewati)` : ""}.`,
+      message: `${shows.length} show dibaca, ${statements.length} show dengan Fritzy disimpan${skipped ? ` (${skipped} baris tidak valid dilewati)` : ""}.${stoppedNote}`,
     });
   } catch (err) {
     return logRun("theater", { ok: false, message: err instanceof Error ? err.message : "Sinkronisasi teater gagal." });

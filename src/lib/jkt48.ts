@@ -46,23 +46,22 @@ export class Jkt48ApiError extends Error {
 }
 
 function describeStatus(status: number): string {
-  if (status === 401) return "API key tidak valid atau belum diisi.";
-  if (status === 403) return "API key tidak punya akses ke endpoint ini.";
-  if (status === 402) return "Kuota API key sudah habis.";
-  if (status === 429) return "Terlalu banyak request ke JKT48Connect, coba lagi nanti.";
-  if (status >= 500) return "Server JKT48Connect sedang bermasalah.";
+  if (status === 401) return "API key tidak valid atau belum diisi (HTTP 401).";
+  if (status === 403) return "Akses ditolak JKT48Connect (HTTP 403).";
+  if (status === 402) return "Kuota API key sudah habis (HTTP 402).";
+  if (status === 429) return "Terlalu banyak request ke JKT48Connect, coba lagi nanti (HTTP 429).";
+  if (status >= 500) return `Server JKT48Connect membalas error (HTTP ${status}).`;
   return `JKT48Connect membalas HTTP ${status}.`;
 }
 
 const USER_AGENT = "FritzyForce/1.0 (+https://fritzyforce.my.id)";
-const TIMEOUT_MS = 25_000;
 
-async function requestOnce(url: string, apiKey: string, fetchImpl: typeof fetch): Promise<Response> {
+async function requestOnce(url: string, apiKey: string, fetchImpl: typeof fetch, timeoutMs: number): Promise<Response> {
   const started = Date.now();
   try {
     return await fetchImpl(url, {
       headers: { "x-api-key": apiKey, accept: "application/json", "user-agent": USER_AGENT },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
     });
   } catch (err) {
@@ -81,18 +80,20 @@ async function requestOnce(url: string, apiKey: string, fetchImpl: typeof fetch)
  * Baris yang formatnya tidak sesuai dilewati, bukan menggagalkan semuanya.
  */
 export async function fetchTheaterPage(
-  opts: { apiKey: string; page: number; baseUrl?: string; fetchImpl?: typeof fetch },
+  opts: { apiKey: string; page: number; baseUrl?: string; fetchImpl?: typeof fetch; timeoutMs?: number; attempts?: number },
 ): Promise<{ shows: TheaterShow[]; skipped: number }> {
   const url = new URL("/api/v1/theater", opts.baseUrl || DEFAULT_API_BASE);
-  url.searchParams.set("page", String(opts.page));
+  // Halaman 1 dipanggil tanpa ?page agar identik dengan contoh dokumentasi.
+  if (opts.page > 1) url.searchParams.set("page", String(opts.page));
   const fetchImpl = opts.fetchImpl ?? fetch;
+  const attempts = opts.attempts ?? 2;
 
   let res: Response | null = null;
   let lastError: unknown = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     try {
-      res = await requestOnce(url.toString(), opts.apiKey, fetchImpl);
-      if (res.status >= 500 && attempt === 0) continue;
+      res = await requestOnce(url.toString(), opts.apiKey, fetchImpl, opts.timeoutMs ?? 25_000);
+      if (res.status >= 500 && attempt < attempts - 1) continue;
       break;
     } catch (err) {
       lastError = err;

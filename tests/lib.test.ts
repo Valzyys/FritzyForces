@@ -151,7 +151,7 @@ describe("JKT48Connect /api/v1/theater", async () => {
   };
   const fakeFetch = (status: number, body: unknown) =>
     (async (url: string | URL | Request, init?: RequestInit) => {
-      expect(String(url)).toBe("https://jkt48connect.com/api/v1/theater?page=2");
+      expect(String(url)).toMatch(/^https:\/\/jkt48connect\.com\/api\/v1\/theater(\?page=2)?$/);
       expect((init?.headers as Record<string, string>)["x-api-key"]).toBe("k");
       return new Response(JSON.stringify(body), { status });
     }) as typeof fetch;
@@ -164,8 +164,19 @@ describe("JKT48Connect /api/v1/theater", async () => {
     expect(lineupHas(res.shows[0], "fritzy")).toBe(true);
     expect(lineupHas(res.shows[0], "freya")).toBe(false);
   });
+  it("halaman 1 dipanggil tanpa ?page, halaman berikutnya dengan ?page=N", async () => {
+    const urls: string[] = [];
+    const f = (async (u: string | URL | Request) => {
+      urls.push(String(u));
+      return new Response(JSON.stringify({ ok: true, data: [] }), { status: 200 });
+    }) as typeof fetch;
+    await fetchTheaterPage({ apiKey: "k", page: 1, fetchImpl: f });
+    await fetchTheaterPage({ apiKey: "k", page: 3, fetchImpl: f });
+    expect(urls).toEqual(["https://jkt48connect.com/api/v1/theater", "https://jkt48connect.com/api/v1/theater?page=3"]);
+  });
   it("menerjemahkan error HTTP & ok:false", async () => {
     await expect(fetchTheaterPage({ apiKey: "k", page: 2, fetchImpl: fakeFetch(401, {}) })).rejects.toThrow(/API key/);
+    await expect(fetchTheaterPage({ apiKey: "k", page: 2, attempts: 1, fetchImpl: fakeFetch(502, {}) })).rejects.toThrow(/HTTP 502/);
     await expect(fetchTheaterPage({ apiKey: "k", page: 2, fetchImpl: fakeFetch(200, { ok: false, message: "Kuota habis" }) })).rejects.toThrow("Kuota habis");
   });
 });

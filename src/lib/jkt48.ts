@@ -54,22 +54,51 @@ function describeStatus(status: number): string {
   return `JKT48Connect membalas HTTP ${status}.`;
 }
 
-/** Ambil satu halaman jadwal teater. Baris yang formatnya tidak sesuai dilewati, bukan menggagalkan semuanya. */
+const USER_AGENT = "FritzyForce/1.0 (+https://fritzyforce.my.id)";
+const TIMEOUT_MS = 25_000;
+
+async function requestOnce(url: string, apiKey: string, fetchImpl: typeof fetch): Promise<Response> {
+  const started = Date.now();
+  try {
+    return await fetchImpl(url, {
+      headers: { "x-api-key": apiKey, accept: "application/json", "user-agent": USER_AGENT },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      cache: "no-store",
+    });
+  } catch (err) {
+    const ms = Date.now() - started;
+    const name = err instanceof Error ? err.name : "";
+    if (name === "TimeoutError" || name === "AbortError") {
+      throw new Jkt48ApiError(`JKT48Connect tidak merespons dalam ${Math.round(ms / 1000)} detik (timeout).`);
+    }
+    const detail = err instanceof Error ? `${err.name}: ${err.message}`.slice(0, 160) : "";
+    throw new Jkt48ApiError(`Gagal terhubung ke JKT48Connect setelah ${ms} ms${detail ? ` — ${detail}` : ""}.`);
+  }
+}
+
+/**
+ * Ambil satu halaman jadwal teater. Satu kali percobaan ulang untuk timeout/5xx.
+ * Baris yang formatnya tidak sesuai dilewati, bukan menggagalkan semuanya.
+ */
 export async function fetchTheaterPage(
   opts: { apiKey: string; page: number; baseUrl?: string; fetchImpl?: typeof fetch },
 ): Promise<{ shows: TheaterShow[]; skipped: number }> {
   const url = new URL("/api/v1/theater", opts.baseUrl || DEFAULT_API_BASE);
   url.searchParams.set("page", String(opts.page));
-  let res: Response;
-  try {
-    res = await (opts.fetchImpl ?? fetch)(url.toString(), {
-      headers: { "x-api-key": opts.apiKey, accept: "application/json" },
-      signal: AbortSignal.timeout(12_000),
-    });
-  } catch (err) {
-    const timeout = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
-    throw new Jkt48ApiError(timeout ? "JKT48Connect tidak merespons (timeout)." : "Gagal terhubung ke JKT48Connect.");
+  const fetchImpl = opts.fetchImpl ?? fetch;
+
+  let res: Response | null = null;
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      res = await requestOnce(url.toString(), opts.apiKey, fetchImpl);
+      if (res.status >= 500 && attempt === 0) continue;
+      break;
+    } catch (err) {
+      lastError = err;
+    }
   }
+  if (!res) throw lastError instanceof Error ? lastError : new Jkt48ApiError("Gagal terhubung ke JKT48Connect.");
   if (!res.ok) throw new Jkt48ApiError(describeStatus(res.status), res.status);
 
   let body: unknown;
